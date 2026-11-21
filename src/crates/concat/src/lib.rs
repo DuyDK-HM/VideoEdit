@@ -2661,6 +2661,7 @@ fn start(project: Option<std::path::PathBuf>, smoke: Smoke) -> Result<(), slint:
                         "batch-subs" => panes::batch_subs::start(&mut state, false),
                         "batch-subs-translate" => panes::batch_subs::start(&mut state, true),
                         "batch-subs-stop" => panes::batch_subs::stop(),
+                        "motion-track" => panes::motion_track::track_selected(&mut state),
                         "pack" => panes::package::pack_open_project(&mut state),
                         "unpack" => panes::package::open_package(),
                         "clear-cache" => state.clear_project_cache(),

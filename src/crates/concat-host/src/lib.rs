@@ -65,6 +65,8 @@ pub mod sounds;
 pub mod stabilize;
 pub mod templates;
 pub mod titles;
+/// Fork: motion tracking of two points through a video.
+pub mod track;
 pub mod updates;
 pub mod voices;
 

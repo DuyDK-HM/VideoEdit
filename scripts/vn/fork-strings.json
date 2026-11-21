@@ -134,5 +134,29 @@
   "batchSubs.doneWithErrors": {
     "en": "Captions placed on {0} clips; {1} failed. First: {2}",
     "vi": "Đã đặt phụ đề cho {0} clip; {1} lỗi. Lỗi đầu: {2}"
+  },
+  "motionTrack.menu": {
+    "en": "Track motion (selected clip follows the video)",
+    "vi": "Bám theo vật (clip đang chọn bám theo video)"
+  },
+  "motionTrack.selectOne": {
+    "en": "Select one title, sticker, shape or picture clip, placed over what it should follow.",
+    "vi": "Chọn một clip chữ, sticker, hình hoặc ảnh, đặt sẵn lên vật cần bám theo."
+  },
+  "motionTrack.noVideo": {
+    "en": "No video under the clip's first frame on another lane.",
+    "vi": "Không có video nào nằm dưới frame đầu của clip trên lane khác."
+  },
+  "motionTrack.started": {
+    "en": "Tracking…",
+    "vi": "Đang theo dõi chuyển động…"
+  },
+  "motionTrack.done": {
+    "en": "Tracked: {0} keys for position, size and rotation.",
+    "vi": "Đã bám theo: {0} mốc vị trí, cỡ và góc xoay."
+  },
+  "motionTrack.tooShort": {
+    "en": "Too short to track.",
+    "vi": "Đoạn quá ngắn để theo dõi."
   }
 }
