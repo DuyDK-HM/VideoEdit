@@ -52,61 +52,61 @@ và đã chạy app thử tận tay.
 - [x] Thêm remote upstream: `git remote add upstream https://github.com/jub0t/Concat.git`. Quy trình cập nhật: `git fetch upstream; git merge upstream/main`
 - [x] Tạo nhánh `vn/main` (D7)
 - [x] `setup.bat` (→ `scripts/vn/setup.ps1`): cài qua winget những gì thiếu, tải FFmpeg vào `vendor/`, ghi `vendor/env.cmd`. `run.bat`: nạp env, `cargo build --profile quick -p concat` (cargo tự biết có cần build lại không), mở `src/target/quick/concat.exe`
-- [ ] Chuyển sang Phase 3: cấu hình đường dẫn Python sidecar (`AIVoice/.venv/Scripts/python.exe` + thư mục adapter)
+- [x] Chuyển sang Phase 3: cấu hình đường dẫn Python sidecar (`AIVoice/.venv/Scripts/python.exe` + thư mục adapter) (xong: `setup.bat` ghi `CONCAT_OLD_ROOT`/`CONCAT_SIDECAR_*` vào `vendor\env.cmd`)
 - Máy code (ổ đầy, GPU AMD) chỉ chạy `cargo check`/`test` từng crate. Máy chạy chính (NVIDIA) cài bằng `setup.bat` rồi chạy `run.bat`.
 - Xong khi: app chạy được, mở và xuất thử một project (kiểm tra trên máy chạy chính).
 
 ### Phase 1: Preview 4K mượt
 Nguyên nhân đã tìm ra: `Proxies` mặc định tắt (`src/crates/concat/src/prefs.rs:132`), và proxy chỉ dùng khi preview ở Half/Quarter.
 Editor cũ thì tạo proxy H.264 720p ngay khi nhập, trình duyệt giải mã bằng phần cứng.
-- [ ] Đo trước: fps lúc phát file 4K H.264 và HEVC ở Full/Half, CPU/GPU%
-- [ ] Bật Proxies mặc định. Khi phát thì đọc proxy ở mọi mức preview (giữ file gốc cho lúc dừng/xuất, nếu cần)
-- [ ] Xem lại cỡ proxy (`src/crates/concat-host/src/proxy.rs`: `DIVISOR`, `SHORTEST_LONG_SIDE`) và encoder dùng để tạo proxy
-- [ ] Kiểm tra hwaccel giải mã trên Windows (`concat-media/src/decode.rs`: d3d11va/dxva/cuda) có được bật cho preview không
+- [ ] Đo trước: fps lúc phát file 4K H.264 và HEVC ở Full/Half, CPU/GPU% (chưa: cần đo trên máy chính, xem câu hỏi mở)
+- [x] Bật Proxies mặc định. Khi phát thì đọc proxy ở mọi mức preview (giữ file gốc cho lúc dừng/xuất, nếu cần) (xong, commit `83288d85`)
+- [x] Xem lại cỡ proxy (`src/crates/concat-host/src/proxy.rs`: `DIVISOR`, `SHORTEST_LONG_SIDE`) và encoder dùng để tạo proxy (`DIVISOR` 4→2: 4K có proxy 1920px)
+- [x] Kiểm tra hwaccel giải mã trên Windows (`concat-media/src/decode.rs`: d3d11va/dxva/cuda) có được bật cho preview không (đã bật sẵn: D3D11VA lúc khởi động; H.264 8-bit cố tình giải mã bằng CPU vì nhanh hơn)
 - Xong khi: file 4K phát ≥ 30 fps ổn định trên laptop, không khựng lúc tua.
 
 ### Phase 2: Tải video và chuẩn hoá file khi nhập
-- [ ] Panel "Tải từ link": nhận link, playlist, kênh; nhận file cookie Netscape; lọc cookie WAF của TikTok. Gọi `yt-dlp` thành tiến trình con, báo tiến độ, tải xong thì nhập vào Media bin
-- [ ] Chuẩn hoá khi nhập: trước hết kiểm tra FFmpeg của Concat đã đọc được những định dạng nào. Chỉ chuyển đổi những cái không đọc được (HEIC→JPG, CAF/AMR→M4A, MTS/MXF→proxy)
+- [x] Panel "Tải từ link": nhận link, playlist, kênh; nhận file cookie Netscape; lọc cookie WAF của TikTok. Gọi `yt-dlp` thành tiến trình con, báo tiến độ, tải xong thì nhập vào Media bin
+- [x] Chuẩn hoá khi nhập: trước hết kiểm tra FFmpeg của Concat đã đọc được những định dạng nào. Chỉ chuyển đổi những cái không đọc được (HEIC→JPG, CAF/AMR→M4A, MTS/MXF→proxy) (đo FFmpeg 8.1: chỉ HEIC cần đổi; ảnh iPhone thật là lưới 512×512, `ffmpeg.exe` ghép ra đủ 3024×4032)
 - Xong khi: dán link TikTok và YouTube đều tải về và nằm trong bin, file HEIC/CAF từ iPhone nhập được.
 
 ### Phase 3: Phụ đề hàng loạt và dịch hàng loạt
-- [ ] Phụ đề: gọi `adapter_autosub_cli.py` (PhoWhisper + Demucs CUDA) qua sidecar (D8)
-- [ ] Dịch: đóng gói `dich.py` + `dich_lo_json.py` + `de_xuat_dich.py` thành CLI Python (vào .srt → ra .srt), giữ phần kiểm tra chất lượng bản dịch tiếng Việt. Ollama/Gemini quản lý bằng `ollama_manager.py`, `gemini_proxy.py`
-- [ ] Phía Concat: một module sidecar chung (chạy tiến trình con, đọc JSON từng dòng, huỷ được, có hàng đợi GPU một việc một lúc), bắt chước mẫu `concat-host/src/tts.rs`
-- [ ] Hộp thoại hàng loạt: chọn nhiều media/clip → phụ đề → (tuỳ chọn) dịch → đặt lên lane caption bằng `concat_project::srt`
-- [ ] Thêm variant `Request` trong `concat-api/src/message.rs` để MCP/CLI dùng được
+- [x] Phụ đề: gọi `adapter_autosub_cli.py` (PhoWhisper + Demucs CUDA) qua sidecar (D8)
+- [x] Dịch: đóng gói `dich.py` + `dich_lo_json.py` + `de_xuat_dich.py` thành CLI Python (vào .srt → ra .srt), giữ phần kiểm tra chất lượng bản dịch tiếng Việt. Ollama/Gemini quản lý bằng `ollama_manager.py`, `gemini_proxy.py`
+- [x] Phía Concat: một module sidecar chung (chạy tiến trình con, đọc JSON từng dòng, huỷ được, có hàng đợi GPU một việc một lúc), bắt chước mẫu `concat-host/src/tts.rs`
+- [x] Hộp thoại hàng loạt: chọn nhiều media/clip → phụ đề → (tuỳ chọn) dịch → đặt lên lane caption bằng `concat_project::srt` (làm thành menu File › Phụ đề hàng loạt, không phải hộp thoại; chạy cho clip đang chọn hoặc tất cả)
+- [ ] Thêm variant `Request` trong `concat-api/src/message.rs` để MCP/CLI dùng được (chưa làm: chưa thấy cần cho MCP/CLI)
 - Xong khi: 10 video chạy một lượt ra phụ đề tiếng Việt đã dịch trên timeline, huỷ giữa chừng không treo.
 
 ### Phase 4: Ghép hàng loạt
-- [ ] Chọn nhiều file (sắp theo tên tự nhiên như `001_ten.mp4`) → đặt nối tiếp lên một timeline (`clips_add_sequence`) → xuất
-- [ ] Đường tắt: nếu các file cùng codec, cỡ và fps thì ghép `-c copy` không mã hoá lại, theo logic của `video_merger.py`
+- [x] Chọn nhiều file (sắp theo tên tự nhiên như `001_ten.mp4`) → đặt nối tiếp lên một timeline (`clips_add_sequence`) → xuất
+- [x] Đường tắt: nếu các file cùng codec, cỡ và fps thì ghép `-c copy` không mã hoá lại, theo logic của `video_merger.py`
 - Xong khi: ghép 20 file khác cỡ ra một video đúng thứ tự, có tiếng (video câm thì chèn tiếng im lặng).
 
 ### Phase 5: Đóng gói project .zip
-- [ ] Gói thư mục project (`concat.json` + media được dùng), bỏ `cache/`, proxy và bản xuất. Mở .zip thì giải nén rồi relink
+- [x] Gói thư mục project (`concat.json` + media được dùng), bỏ `cache/`, proxy và bản xuất. Mở .zip thì giải nén rồi relink
 - Xong khi: gói trên máy A, mở trên máy B đủ media, không có clip offline.
 
 ### Phase 6: Scopes
-- [ ] Waveform (luma/RGB parade), vectorscope, histogram, tính trên frame preview đã thu nhỏ. Tham khảo `scopes_mau.js` của dự án cũ
-- [ ] Hiện trong panel màu (`concat/src/grading.rs`, inspector)
+- [x] Waveform (luma/RGB parade), vectorscope, histogram, tính trên frame preview đã thu nhỏ. Tham khảo `scopes_mau.js` của dự án cũ
+- [x] Hiện trong panel màu (`concat/src/grading.rs`, inspector)
 - Xong khi: chỉnh màu thì scopes cập nhật theo thời gian thực, không làm tụt fps preview.
 
 ### Phase 7: Motion tracking
-- [ ] Nghiên cứu trước: tracker template/NCC trên frame thu nhỏ (thuần Rust), hay model ONNX qua `ort`
-- [ ] Track 2 điểm → suy ra phép đồng dạng (dịch, cỡ, xoay) → keyframe `OffsetX/OffsetY/Scale/Rotation` gắn vào clip chữ hoặc mask (D10). `concat-project` đã có trường `motionTrack` dự phòng (`lib.rs:2800`)
+- [x] Nghiên cứu trước: tracker template/NCC trên frame thu nhỏ (thuần Rust), hay model ONNX qua `ort` (chọn NCC thuần Rust, không cần model)
+- [x] Track 2 điểm → suy ra phép đồng dạng (dịch, cỡ, xoay) → keyframe `OffsetX/OffsetY/Scale/Rotation` gắn vào clip chữ hoặc mask (D10). `concat-project` đã có trường `motionTrack` dự phòng (`lib.rs:2800`)
 - Xong khi: chữ bám theo một vật trong 10 giây video (vật có lại gần/ra xa và xoay) không bị trôi rõ.
 
 ### Phase 8: Server riêng (SFX và đồng bộ project)
-- [ ] SFX: dựng `audio/manifest.json` + file trên server theo đúng định dạng `docs/AUDIO_LIBRARY.md`. Đổi các hằng `SOUNDS_MANIFEST`, `SOUNDS_REPO`, `SOUNDS_RELEASE` (`concat-host/src/models.rs`) sang server mình hoặc cho chỉnh trong Settings. Chuyển kho SFX CC0 của dự án cũ (`assets/thu_vien_am/`) lên
-- [ ] Đồng bộ project (D9): FastAPI trên `rr`, xác thực bằng token. API:
+- [x] SFX: dựng `audio/manifest.json` + file trên server theo đúng định dạng `docs/AUDIO_LIBRARY.md`. Đổi các hằng `SOUNDS_MANIFEST`, `SOUNDS_REPO`, `SOUNDS_RELEASE` (`concat-host/src/models.rs`) sang server mình hoặc cho chỉnh trong Settings. Chuyển kho SFX CC0 của dự án cũ (`assets/thu_vien_am/`) lên
+- [x] Đồng bộ project (D9): FastAPI trên `rr`, xác thực bằng token. API:
   - `POST /blobs/missing` (gửi danh sách sha256, nhận lại những hash server chưa có)
   - `PUT /blobs/{sha256}` (upload kiểu stream; server tính lại hash rồi mới nhận file)
   - `GET /blobs/{sha256}`
   - `PUT/GET /projects/{id}` (`concat.json` + bảng đường dẫn tương đối → hash, lưu nhiều phiên bản)
   - `GET /projects`
   - Bỏ qua `cache/`, proxy và bản xuất. Máy nhận kéo những blob còn thiếu về rồi relink
-- [ ] Deploy theo cách chép file qua `scp` lên `rr`, chạy lệnh từ PowerShell
+- [x] Deploy theo cách chép file qua `scp` lên `rr`, chạy lệnh từ PowerShell (`server/deploy.ps1`, user service `concat-sync` trên rr:8700, chỉ Tailscale)
 - Xong khi: mở project trên máy khác thấy đủ SFX, đẩy và kéo project qua server được.
 
 ## Thứ tự và phụ thuộc
@@ -118,6 +118,9 @@ Editor cũ thì tạo proxy H.264 720p ngay khi nhập, trình duyệt giải m�
 - Crate UI build rất lâu (Slint sinh khoảng 970k dòng Rust). Nên tách logic ra crate khác để test nhanh.
 - Sidecar Python phụ thuộc vào `AIVoice/.venv` của dự án cũ. Phải ghi rõ đường dẫn cấu hình, báo lỗi dễ hiểu khi thiếu.
 - Muốn phát hành bản đã sửa thì phải đổi tên và icon (`TRADEMARK.md`). Dùng cá nhân thì không cần.
+
+## Trạng thái (2026-11-22 sáng)
+Đã code xong Phase 0–8, mỗi phase một commit trên `vn/main`. Test host 37/37 PASS, `clippy -D warnings` sạch cho `concat` + `concat-host`, server 10/10 PASS. Bridge phụ đề + dịch đã chạy thật trên máy chính. Cách dùng: [USAGE.md](USAGE.md).
 
 ## Câu hỏi còn mở
 - Upload blob lớn (file 4K vài GB) có cần chia phần để tải tiếp khi rớt mạng không? Chốt khi đo mạng tới `rr`.
