@@ -97,6 +97,22 @@ pub fn pack(project: &Path, out: &Path) -> Result<usize, String> {
             return None;
         }
         if let Ok(inside) = path.strip_prefix(project) {
+            // A file in a folder left out (an enhanced copy in `cache/`) that
+            // the document uses goes in after all, on its own.
+            let skipped = inside
+                .components()
+                .next()
+                .is_some_and(|first| SKIPPED.iter().any(|skip| first.as_os_str() == *skip));
+            if skipped {
+                let copy = staging.join(inside);
+                if let Err(error) = copy
+                    .parent()
+                    .map_or(Ok(()), std::fs::create_dir_all)
+                    .and_then(|()| std::fs::copy(path, &copy).map(drop))
+                {
+                    failure.get_or_insert(format!("{}: {error}", path.display()));
+                }
+            }
             return Some(format!("{PREFIX}{}", inside.to_string_lossy().replace('\\', "/")));
         }
         if let Some(packed) = external.get(path) {
@@ -194,11 +210,13 @@ mod tests {
         std::fs::create_dir_all(&outside).unwrap();
         std::fs::write(project.join("audio/voice.wav"), b"wav").unwrap();
         std::fs::write(project.join("cache/proxy.mp4"), b"big").unwrap();
+        std::fs::write(project.join("cache/enhanced.mp4"), b"used").unwrap();
         std::fs::write(outside.join("clip.mp4"), b"mp4").unwrap();
         let document = serde_json::json!({"media": [
             {"path": project.join("audio/voice.wav")},
             {"path": outside.join("clip.mp4")},
             {"path": outside.join("clip.mp4")},
+            {"path": project.join("cache/enhanced.mp4")},
         ]});
         std::fs::write(project.join(DOCUMENT), document.to_string()).unwrap();
 
@@ -212,7 +230,8 @@ mod tests {
             let path = PathBuf::from(item["path"].as_str().unwrap());
             assert!(path.starts_with(&opened) && path.is_file(), "{}", path.display());
         }
-        assert!(!opened.join("cache").exists());
+        assert!(opened.join("cache/enhanced.mp4").is_file(), "a cache file the document uses goes in");
+        assert!(!opened.join("cache/proxy.mp4").exists(), "the rest of the cache does not");
         std::fs::remove_dir_all(&root).unwrap();
     }
 }
