@@ -29,6 +29,8 @@ mod consolidate_tests;
 pub mod crash;
 pub mod cutout;
 pub mod dirs;
+/// Fork: videos downloaded from a link with yt-dlp.
+pub mod download;
 pub mod enhance;
 pub mod export;
 pub mod jobs;

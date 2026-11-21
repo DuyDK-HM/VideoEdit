@@ -53,6 +53,8 @@ import { ConfirmData, ConfirmDialog } from "dialogs/confirm.slint";
 import { CaptionsDialog, CaptionsSheetData } from "dialogs/captions.slint";
 import { SpeechDialog, SpeechSheetData } from "dialogs/speech.slint";
 import { NewVoiceData, NewVoiceDialog } from "dialogs/new-voice.slint";
+// Fork: Download from links.
+import { DownloadData, DownloadDialog } from "dialogs/download.slint";
 import { AvatarData } from "primitives/avatar.slint";
 import { VoiceoverData, VoiceoverPanel } from "dialogs/voiceover.slint";
 import { DockDivider, DockSide, SeatBox } from "dock.slint";
@@ -187,6 +189,7 @@ export {
     Sounds,
     VoiceCardData,
     NewVoiceData,
+    DownloadData,
 }
 export component App inherits Window {
     title: "Concat";
@@ -240,7 +243,7 @@ export component App inherits Window {
     }
     property <bool> sheet-open: root.export.open || root.settings.open
         || root.project-sheet.open || root.captions.open || root.speech.open
-        || root.start.composing || root.new-voice.open;
+        || root.start.composing || root.new-voice.open || root.link-download.open;
     changed sheet-open => {
         if (!root.sheet-open) {
             keys.focus();
@@ -326,7 +329,7 @@ export component App inherits Window {
     /// then, and nothing that acts on what the sheet covers.
     property <bool> sheet-up: root.start.composing || root.export.open || root.settings.open
         || root.project-sheet.open || root.new-voice.open || root.relink.open
-        || root.confirm.open;
+        || root.confirm.open || root.link-download.open;
     /// Which floating tool card is in front: "captions" or "speech". The
     /// one opened or grabbed last; Escape closes it first.
     property <string> front-tool: "captions";
@@ -503,6 +506,14 @@ export component App inherits Window {
     callback new-voice-start-changed(seconds: float);
     callback new-voice-pick-picture();
     callback new-voice-save();
+    /// Fork: the Download from links dialog; see DownloadDialog.
+    in property <DownloadData> link-download;
+    callback link-download-closed();
+    callback link-download-urls-edited(text: string);
+    callback link-download-pick-cookies();
+    callback link-download-clear-cookies();
+    callback link-download-start();
+    callback link-download-stop();
 
     /// The voiceover panel; see VoiceoverPanel. Its meter and clock come
     /// on the Editor global, from a timer.
@@ -666,6 +677,7 @@ export component App inherits Window {
             if (event.text == Key.Escape || event.text == Key.Back) {
                 if (root.confirm.open) { root.confirm-dismissed(); return accept; }
                 if (root.relink.open) { root.relink-dismiss(); return accept; }
+                if (root.link-download.open) { root.link-download-closed(); return accept; }
                 if (root.new-voice.open) {
                     if (!root.new-voice.saving) { root.new-voice-closed(); }
                     return accept;
@@ -1126,6 +1138,27 @@ export component App inherits Window {
         start-changed(seconds) => { root.new-voice-start-changed(seconds); }
         pick-picture => { root.new-voice-pick-picture(); }
         save => { root.new-voice-save(); }
+    }
+
+    // Fork: Download from links, over everything the File menu sits on.
+    DownloadDialog {
+        fill: root.sheets-fill;
+        inset-top: root.safe-area-insets.top;
+        inset-bottom: root.safe-area-insets.bottom;
+        inset-left: root.safe-area-insets.left;
+        inset-right: root.safe-area-insets.right;
+        x: 0;
+        y: root.sheets-top;
+        width: root.width;
+        height: root.height - root.sheets-top;
+        data: root.link-download;
+
+        closed => { root.link-download-closed(); }
+        urls-edited(text) => { root.link-download-urls-edited(text); }
+        pick-cookies => { root.link-download-pick-cookies(); }
+        clear-cookies => { root.link-download-clear-cookies(); }
+        start => { root.link-download-start(); }
+        stop => { root.link-download-stop(); }
     }
 
     RelinkDialog {

@@ -1097,6 +1097,8 @@ pub struct Studio {
     pub export: crate::panes::export::ExportPane,
     pub settings: crate::panes::settings::SettingsPane,
     pub relink: crate::panes::relink::RelinkPane,
+    /// Fork: the Download from links dialog.
+    pub download: crate::panes::download::DownloadPane,
     /// The notice that part of the project cannot be shown, held back while
     /// the relink dialog the same open raised is up; raised when it closes.
     pub unread_pending: Option<String>,
@@ -3122,6 +3124,7 @@ impl Studio {
             export: Default::default(),
             settings: crate::panes::settings::SettingsPane::default(),
             relink: crate::panes::relink::RelinkPane::default(),
+            download: Default::default(),
             unread_pending: None,
             confirm: None,
             transition_selected: None,

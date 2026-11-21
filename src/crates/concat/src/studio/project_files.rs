@@ -545,6 +545,11 @@ impl Studio {
                     self.warn(&notice);
                 }
             }
+            crate::panes::Msg::Download(msg) => {
+                let mut pane = std::mem::take(&mut self.download);
+                pane.update(msg, self);
+                self.download = pane;
+            }
             crate::panes::Msg::Project(msg) => {
                 let mut pane = std::mem::take(&mut self.project_sheet);
                 pane.update(msg, self);

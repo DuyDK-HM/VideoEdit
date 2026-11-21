@@ -1,0 +1,58 @@
+{
+  "download.title": {
+    "en": "Download from links",
+    "vi": "Tải từ link"
+  },
+  "download.menu": {
+    "en": "Download from links…",
+    "vi": "Tải từ link…"
+  },
+  "download.links": {
+    "en": "Links",
+    "vi": "Link"
+  },
+  "download.linksHint": {
+    "en": "One link per line: a video, a playlist or a whole channel (TikTok, YouTube, Douyin…).",
+    "vi": "Mỗi dòng một link: video, playlist hoặc cả kênh (TikTok, YouTube, Douyin…)."
+  },
+  "download.cookies": {
+    "en": "Cookies",
+    "vi": "Cookie"
+  },
+  "download.pickCookies": {
+    "en": "Cookie file (.txt)…",
+    "vi": "File cookie (.txt)…"
+  },
+  "download.cookiesHint": {
+    "en": "Optional: a Netscape cookie file exported from your browser, for private or age-gated videos. TikTok's WAF cookies are left out.",
+    "vi": "Không bắt buộc: file cookie dạng Netscape xuất từ trình duyệt, cho video riêng tư hoặc giới hạn tuổi. Cookie WAF của TikTok sẽ được bỏ đi."
+  },
+  "download.start": {
+    "en": "Download",
+    "vi": "Tải về"
+  },
+  "download.noLinks": {
+    "en": "Paste at least one link starting with http.",
+    "vi": "Dán ít nhất một link bắt đầu bằng http."
+  },
+  "download.running": {
+    "en": "{0} downloaded · current {1}%",
+    "vi": "Đã tải {0} · đang tải {1}%"
+  },
+  "download.done": {
+    "en": "Downloaded {0} videos into the bin.",
+    "vi": "Đã tải {0} video vào bin."
+  },
+  "download.cancelled": {
+    "en": "Stopped. {0} videos had finished.",
+    "vi": "Đã dừng. Có {0} video đã tải xong."
+  },
+  "download.doneWithErrors": {
+    "en": "Downloaded {0}; {1} failed. First error: {2}",
+    "vi": "Đã tải {0}; {1} link lỗi. Lỗi đầu tiên: {2}"
+  },
+  "download.stop": {
+    "en": "Stop",
+    "vi": "Dừng"
+  }
+}

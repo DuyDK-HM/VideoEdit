@@ -2126,6 +2126,7 @@ impl Studio {
         );
         app.set_speech(self.speech.data(self));
         app.set_new_voice(self.speech.new_voice_data());
+        app.set_link_download(self.download.data());
         // The Audio page.
         sync(&models.sounds_mine, self.sounds.mine());
         sync(&models.sounds_concat, self.sounds.concat_rows());
@@ -2637,6 +2638,8 @@ impl Studio {
                     true,
                 ),
                 row("speech", t("studio.textToSpeech"), Glyph::Volume, "", true),
+                // Fork: Download from links.
+                row("download", t("download.menu"), Glyph::Import, "", true),
                 row(
                     "clear-cache",
                     t("studio.clearProjectCache"),

@@ -28,6 +28,8 @@ Install-WingetPackage "Microsoft.VisualStudio.2022.BuildTools" @(
     "--override", "--quiet --wait --norestart --add Microsoft.VisualStudio.Workload.VCTools --includeRecommended")
 Install-WingetPackage "Kitware.CMake"
 Install-WingetPackage "LLVM.LLVM"
+# Downloads from a link (TikTok, YouTube, Douyin): the fork's Download dialog runs it.
+Install-WingetPackage "yt-dlp.yt-dlp" -command yt-dlp
 
 $llvmBin = Join-Path $env:ProgramFiles "LLVM\bin"
 if (-not (Test-Path (Join-Path $llvmBin "libclang.dll"))) { throw "libclang.dll not found in $llvmBin" }

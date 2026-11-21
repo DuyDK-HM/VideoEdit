@@ -110,6 +110,7 @@ use dock::{Dock, SEAT_MIN_GRAB, SEAT_MIN_H, SEAT_MIN_W};
 use host::{Host, Shell};
 use panes::Msg;
 use panes::captions::CaptionsMsg;
+use panes::download::DownloadMsg;
 use panes::export::ExportMsg;
 use panes::media_bin::MediaMsg;
 use panes::monitor::MonitorMsg;
@@ -1756,6 +1757,33 @@ fn start(project: Option<std::path::PathBuf>, smoke: Smoke) -> Result<(), slint:
             );
         });
     }
+    // Fork: the Download from links dialog.
+    app.on_link_download_closed(on_window!(|state| {
+        state.handle(Msg::Download(DownloadMsg::Close));
+    }));
+    app.on_link_download_urls_edited(on_window!(|state, text: SharedString| {
+        state.handle(Msg::Download(DownloadMsg::UrlsEdited(text.to_string())));
+    }));
+    app.on_link_download_pick_cookies(|| {
+        host::pick_files_then(
+            i18n::t("download.pickCookies"),
+            Some((i18n::t("download.cookies"), &["txt"])),
+            |studio, _, _, paths| {
+                if let Some(path) = paths.into_iter().next() {
+                    studio.handle(Msg::Download(DownloadMsg::CookiesPicked(path)));
+                }
+            },
+        );
+    });
+    app.on_link_download_clear_cookies(on_window!(|state| {
+        state.handle(Msg::Download(DownloadMsg::CookiesCleared));
+    }));
+    app.on_link_download_start(on_window!(|state| {
+        state.handle(Msg::Download(DownloadMsg::Start));
+    }));
+    app.on_link_download_stop(on_window!(|state| {
+        state.handle(Msg::Download(DownloadMsg::Cancel));
+    }));
     // The New voice sheet: the recording's name, a line about it, where
     // in it the voice is kept from, a picture through the same picker as
     // Text to speech's, and the save.
@@ -2628,6 +2656,7 @@ fn start(project: Option<std::path::PathBuf>, smoke: Smoke) -> Result<(), slint:
                         "export" => state.handle(Msg::Export(ExportMsg::Open)),
                         "template" => state.save_template(),
                         "speech" => state.handle(Msg::Speech(SpeechMsg::Open)),
+                        "download" => state.handle(Msg::Download(DownloadMsg::Open)),
                         "clear-cache" => state.clear_project_cache(),
                         "settings" => state.handle(Msg::Settings(SettingsMsg::Open)),
                         "close-project" => {

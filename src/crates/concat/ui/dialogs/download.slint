@@ -1,0 +1,132 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-FileCopyrightText: 2026 Concat fork contributors
+
+import { I18n } from "../i18n.slint";
+import { Theme } from "../theme/theme.slint";
+import { Glyph } from "../icons.slint";
+import { ActionPair, Button, DialogRow, DialogSection, Modal } from "../primitives/modal.slint";
+
+// Fork: Download from links. Links pasted one per line go to yt-dlp
+// (concat_host::download) and each video lands in the bin as it finishes.
+// Closing the dialog leaves a running download going; Stop ends it.
+
+export struct DownloadData {
+    open: bool,
+    urls: string,
+    /// The cookie file's name, or empty for none.
+    cookies: string,
+    running: bool,
+    /// Progress while running, the outcome after.
+    status: string,
+    can-start: bool,
+}
+
+export component DownloadDialog inherits Modal {
+    in property <DownloadData> data;
+
+    callback urls-edited(text: string);
+    callback pick-cookies();
+    callback clear-cookies();
+    callback start();
+    callback stop();
+
+    open: root.data.open;
+    title: I18n.t("download.title");
+    glyph: Glyph.import;
+    surface-width: 520px;
+
+    VerticalLayout {
+        DialogSection {
+            first: true;
+            title: I18n.t("download.links");
+
+            Rectangle {
+                height: 140px;
+                border-radius: Theme.r-sm;
+                border-width: 1px;
+                border-color: links.has-focus ? Theme.accent : Theme.line-strong;
+                background: Theme.field;
+
+                links := TextInput {
+                    x: 8px;
+                    y: 8px;
+                    width: parent.width - 16px;
+                    height: parent.height - 16px;
+                    text: root.data.urls;
+                    enabled: !root.data.running;
+                    single-line: false;
+                    wrap: char-wrap;
+                    color: Theme.fg;
+                    font-family: Theme.font-technical;
+                    font-size: Theme.fs-sm;
+                    selection-background-color: Theme.accent;
+                    selection-foreground-color: Theme.on-accent;
+                    edited => { root.urls-edited(self.text); }
+                }
+            }
+
+            Text {
+                text: I18n.t("download.linksHint");
+                color: Theme.fg-dim;
+                font-size: Theme.fs-sm;
+                wrap: word-wrap;
+            }
+        }
+
+        DialogSection {
+            title: I18n.t("download.cookies");
+
+            DialogRow {
+                label: I18n.t("download.cookies");
+                Button {
+                    label: root.data.cookies != "" ? root.data.cookies : I18n.t("download.pickCookies");
+                    glyph: Glyph.import;
+                    ghost: true;
+                    enabled: !root.data.running;
+                    clicked => { root.pick-cookies(); }
+                }
+                if root.data.cookies != "": Button {
+                    glyph: Glyph.close;
+                    square: true;
+                    ghost: true;
+                    enabled: !root.data.running;
+                    clicked => { root.clear-cookies(); }
+                }
+            }
+
+            Text {
+                text: I18n.t("download.cookiesHint");
+                color: Theme.fg-dim;
+                font-size: Theme.fs-sm;
+                wrap: word-wrap;
+            }
+        }
+
+        if root.data.status != "": Text {
+            text: root.data.status;
+            color: Theme.fg-muted;
+            font-size: Theme.fs-sm;
+            wrap: word-wrap;
+        }
+
+        Rectangle {
+            height: 1px;
+            background: Theme.line;
+        }
+
+        ActionPair {
+            padding: 14px;
+            action-glyph: root.data.running ? Glyph.close : Glyph.check;
+            action-label: root.data.running ? I18n.t("download.stop") : I18n.t("download.start");
+            action-enabled: root.data.running || root.data.can-start;
+            cancel => { root.closed(); }
+            act => {
+                if (root.data.running) {
+                    root.stop();
+                } else {
+                    root.start();
+                }
+            }
+        }
+    }
+}

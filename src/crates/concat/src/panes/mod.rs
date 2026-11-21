@@ -15,6 +15,8 @@
 //! export sheet is the first, and the shape the rest follow.
 
 pub mod captions;
+/// Fork: Download from links.
+pub mod download;
 pub mod export;
 pub mod glide;
 pub mod media_bin;
@@ -56,6 +58,8 @@ pub enum Msg {
     Voiceover(voiceover::VoiceoverMsg),
     /// To the library's Audio page.
     Sounds(sounds::SoundsMsg),
+    /// Fork: to the Download from links dialog.
+    Download(download::DownloadMsg),
 }
 
 /// What a message says in the log: the activity trail of what the person
@@ -87,6 +91,7 @@ pub fn activity(msg: &Msg) -> Option<Activity> {
         | Msg::Export(ExportMsg::Progress { .. })
         | Msg::Captions(CaptionsMsg::Progress(_))
         | Msg::Speech(SpeechMsg::Progress(_))
+        | Msg::Download(download::DownloadMsg::Progress(_))
         | Msg::Settings(SettingsMsg::ModelProgress { .. } | SettingsMsg::InstallProgress { .. }) => {
             return None;
         }
