@@ -106,12 +106,17 @@ pub fn download(
     let mut command = Command::new("yt-dlp");
     command
         .args(["--newline", "--no-colors", "--ignore-errors", "--progress", "--restrict-filenames"])
+        // UTF-8 out, whatever the console's code page: a project folder
+        // named in Vietnamese is in every path it prints.
+        .args(["--encoding", "utf-8"])
+        .env("PYTHONIOENCODING", "utf-8")
         .args(["-f", "bv*+ba/b", "--merge-output-format", "mp4"])
         .arg("-o")
         .arg(folder.join("%(extractor_key)s_%(id)s.%(ext)s"))
         .args(["--progress-template", &format!("download:{PROGRESS}%(progress._percent_str)s")])
         .args(["--print", &format!("after_move:{FILE}%(filepath)s")]);
-    // Kept for the run, deleted when it ends.
+    // In the system's temp folder, never the project's (a package or a sync
+    // would carry the session cookies along), and deleted however this ends.
     let mut filtered = None;
     if let Some(cookies) = cookies {
         let text = std::fs::read_to_string(cookies)
@@ -120,10 +125,13 @@ pub fn download(
         if !dropped.is_empty() {
             log::info!("download: left out WAF cookies {}", dropped.join(", "));
         }
-        let path = folder.join(".cookies-for-yt-dlp.txt");
+        let stamp = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map_or(0, |since| since.as_nanos());
+        let path = std::env::temp_dir().join(format!("concat-cookies-{}-{stamp}.txt", std::process::id()));
         std::fs::write(&path, kept).map_err(|error| format!("{}: {error}", path.display()))?;
         command.arg("--cookies").arg(&path);
-        filtered = Some(path);
+        filtered = Some(Removed(path));
     }
     command.args(urls).stdout(Stdio::piped()).stderr(Stdio::piped());
     #[cfg(windows)]
@@ -147,7 +155,10 @@ pub fn download(
     {
         let lines = lines.clone();
         std::thread::spawn(move || {
-            for line in BufReader::new(stream).lines().map_while(Result::ok) {
+            // Bytes split at newlines and read leniently: one line that is
+            // not UTF-8 must not end the reading of the rest.
+            for line in BufReader::new(stream).split(b'\n').map_while(Result::ok) {
+                let line = String::from_utf8_lossy(&line).trim_end_matches('\r').to_owned();
                 if lines.send(line).is_err() {
                     break;
                 }
@@ -178,10 +189,17 @@ pub fn download(
         }
     }
     let _ = child.wait();
-    if let Some(path) = filtered {
-        let _ = std::fs::remove_file(path);
-    }
+    drop(filtered);
     Ok(outcome)
+}
+
+/// A file deleted when this goes out of scope.
+struct Removed(std::path::PathBuf);
+
+impl Drop for Removed {
+    fn drop(&mut self) {
+        let _ = std::fs::remove_file(&self.0);
+    }
 }
 
 /// Ends `child` and what it started (the ffmpeg merging a video).

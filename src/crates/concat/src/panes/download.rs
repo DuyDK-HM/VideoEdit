@@ -11,7 +11,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 
 use concat_host::download::{self, Event, Outcome};
 
-use crate::host::{on_ui_in_project, project_epoch, spawn_long_in_project};
+use crate::host::{on_ui_in_project, project_epoch, spawn_long};
 use crate::i18n::{t, tf};
 use crate::panes::Msg;
 use crate::panes::media_bin::MediaMsg;
@@ -121,7 +121,9 @@ impl DownloadPane {
         let cancel = Arc::clone(&self.cancel);
         let cookies = self.cookies.clone();
         let epoch = project_epoch();
-        spawn_long_in_project(
+        // Delivered whatever is open by then, so the dialog is never left
+        // running; the files themselves are only imported where they began.
+        spawn_long(
             move || {
                 download::download(&urls, cookies.as_deref(), &folder, &cancel, &mut |event| {
                     let msg = match event {
