@@ -34,7 +34,9 @@ if (-not (Test-Path (Join-Path $llvmBin "libclang.dll"))) { throw "libclang.dll 
 $cmakeBin = Join-Path $env:ProgramFiles "CMake\bin"
 
 # FFmpeg: the same build CI links, fetched and checked by scripts/ci/fetch.sh.
-$bash = Join-Path $env:ProgramFiles "Git\bin\bash.exe"
+# Git's bash beside wherever git.exe is (Git need not be in Program Files).
+$git = Get-Command git -ErrorAction SilentlyContinue
+$bash = if ($git) { Join-Path (Split-Path (Split-Path $git.Source)) "bin\bash.exe" } else { "" }
 if (-not (Test-Path $bash)) { throw "Git's bash not found at $bash (open a new terminal after Git installs, then rerun)" }
 New-Item -ItemType Directory -Force $vendor | Out-Null
 $zip = Join-Path $vendor "ffmpeg-win.zip"
