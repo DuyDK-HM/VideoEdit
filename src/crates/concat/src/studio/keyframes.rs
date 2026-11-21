@@ -2640,6 +2640,9 @@ impl Studio {
                 row("speech", t("studio.textToSpeech"), Glyph::Volume, "", true),
                 // Fork: Download from links.
                 row("download", t("download.menu"), Glyph::Import, "", true),
+                row("batch-subs", t("batchSubs.menu"), Glyph::Sparkle, "", true),
+                row("batch-subs-translate", t("batchSubs.menuTranslate"), Glyph::Sparkle, "", true),
+                row("batch-subs-stop", t("batchSubs.menuStop"), Glyph::Close, "", true),
                 row(
                     "clear-cache",
                     t("studio.clearProjectCache"),

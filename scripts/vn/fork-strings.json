@@ -54,5 +54,45 @@
   "download.stop": {
     "en": "Stop",
     "vi": "Dừng"
+  },
+  "batchSubs.menu": {
+    "en": "Batch subtitles (PhoWhisper)",
+    "vi": "Phụ đề hàng loạt (PhoWhisper)"
+  },
+  "batchSubs.menuTranslate": {
+    "en": "Batch subtitles + translation",
+    "vi": "Phụ đề + dịch hàng loạt"
+  },
+  "batchSubs.menuStop": {
+    "en": "Stop the AI job",
+    "vi": "Dừng việc AI"
+  },
+  "batchSubs.busy": {
+    "en": "An AI job is already running; stop it first.",
+    "vi": "Đang có việc AI chạy; dừng nó trước đã."
+  },
+  "batchSubs.noClips": {
+    "en": "No video clips on the timeline to subtitle.",
+    "vi": "Timeline không có clip video nào để làm phụ đề."
+  },
+  "batchSubs.started": {
+    "en": "Subtitling {0} clips, one at a time on the GPU…",
+    "vi": "Đang làm phụ đề cho {0} clip, lần lượt từng clip trên GPU…"
+  },
+  "batchSubs.subtitling": {
+    "en": "Subtitles {0}/{1} · {2} · {3}",
+    "vi": "Phụ đề {0}/{1} · {2} · {3}"
+  },
+  "batchSubs.translating": {
+    "en": "Translating {0}/{1} · {2} · {3}",
+    "vi": "Đang dịch {0}/{1} · {2} · {3}"
+  },
+  "batchSubs.done": {
+    "en": "Captions placed on {0} clips.",
+    "vi": "Đã đặt phụ đề cho {0} clip."
+  },
+  "batchSubs.doneWithErrors": {
+    "en": "Captions placed on {0} clips; {1} failed. First: {2}",
+    "vi": "Đã đặt phụ đề cho {0} clip; {1} lỗi. Lỗi đầu: {2}"
   }
 }

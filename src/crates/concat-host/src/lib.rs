@@ -53,6 +53,8 @@ pub mod record;
 pub mod reverse;
 mod route;
 pub mod session;
+/// Fork: the old project's AI (subtitles, translation) as a child process.
+pub mod sidecar;
 pub mod sounds;
 pub mod stabilize;
 pub mod templates;

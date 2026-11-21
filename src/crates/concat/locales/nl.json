@@ -2,6 +2,16 @@
   "_": {
     "name": "Nederlands"
   },
+  "batchSubs.busy": "An AI job is already running; stop it first.",
+  "batchSubs.done": "Captions placed on {0} clips.",
+  "batchSubs.doneWithErrors": "Captions placed on {0} clips; {1} failed. First: {2}",
+  "batchSubs.menu": "Batch subtitles (PhoWhisper)",
+  "batchSubs.menuStop": "Stop the AI job",
+  "batchSubs.menuTranslate": "Batch subtitles + translation",
+  "batchSubs.noClips": "No video clips on the timeline to subtitle.",
+  "batchSubs.started": "Subtitling {0} clips, one at a time on the GPU…",
+  "batchSubs.subtitling": "Subtitles {0}/{1} · {2} · {3}",
+  "batchSubs.translating": "Translating {0}/{1} · {2} · {3}",
   "beats.bpm": "{0} BPM",
   "beats.cut": "Splitsen op beats",
   "beats.cutNote": "Splitst de clips boven dit nummer bij elke markering, in één stap die je kunt ongedaan maken.",

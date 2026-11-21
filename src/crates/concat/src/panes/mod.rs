@@ -15,6 +15,8 @@
 //! export sheet is the first, and the shape the rest follow.
 
 pub mod captions;
+/// Fork: batch subtitles and translation through the old project's AI.
+pub mod batch_subs;
 /// Fork: Download from links.
 pub mod download;
 pub mod export;

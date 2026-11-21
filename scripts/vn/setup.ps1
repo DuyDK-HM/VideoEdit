@@ -54,12 +54,28 @@ if (-not ((Test-Path $marker) -and ((Get-Content $marker) -eq $zipHash))) {
 }
 $ffDir = (Get-ChildItem $ffRoot -Directory | Select-Object -First 1).FullName
 
+# The old project's AI, for the fork's batch subtitles and translation: found
+# beside this repository, its AIVoice venv's Python runs sidecar\old_project_bridge.py.
+$oldRoot = Join-Path (Split-Path $root) "ToolAutoMakeCartoonVideo2DFromComics"
+$oldPython = Join-Path $oldRoot "AIVoice\.venv\Scripts\python.exe"
+$sidecar = ""
+if (Test-Path $oldPython) {
+    $sidecar = @"
+set "CONCAT_OLD_ROOT=$oldRoot"
+set "CONCAT_SIDECAR_PYTHON=$oldPython"
+set "CONCAT_SIDECAR_BRIDGE=$root\sidecar\old_project_bridge.py"
+"@
+} else {
+    Write-Host "note: $oldPython not found; batch subtitles and translation stay off"
+}
+
 # rustup reads src\rust-toolchain.toml on the first cargo call and fetches that toolchain.
 @"
 @rem Written by scripts\vn\setup.ps1 for this machine. Do not commit.
 set "FFMPEG_DIR=$ffDir"
 set "LIBCLANG_PATH=$llvmBin"
 set "PATH=$ffDir\bin;$llvmBin;$cmakeBin;%USERPROFILE%\.cargo\bin;%PATH%"
+$sidecar
 "@ | Set-Content -Encoding ascii (Join-Path $vendor "env.cmd")
 
 Write-Host "done: vendor\env.cmd written. Start the editor with run.bat."

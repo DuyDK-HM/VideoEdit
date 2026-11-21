@@ -2,6 +2,16 @@
   "_": {
     "name": "Tiếng Việt"
   },
+  "batchSubs.busy": "Đang có việc AI chạy; dừng nó trước đã.",
+  "batchSubs.done": "Đã đặt phụ đề cho {0} clip.",
+  "batchSubs.doneWithErrors": "Đã đặt phụ đề cho {0} clip; {1} lỗi. Lỗi đầu: {2}",
+  "batchSubs.menu": "Phụ đề hàng loạt (PhoWhisper)",
+  "batchSubs.menuStop": "Dừng việc AI",
+  "batchSubs.menuTranslate": "Phụ đề + dịch hàng loạt",
+  "batchSubs.noClips": "Timeline không có clip video nào để làm phụ đề.",
+  "batchSubs.started": "Đang làm phụ đề cho {0} clip, lần lượt từng clip trên GPU…",
+  "batchSubs.subtitling": "Phụ đề {0}/{1} · {2} · {3}",
+  "batchSubs.translating": "Đang dịch {0}/{1} · {2} · {3}",
   "beats.bpm": "{0} BPM",
   "beats.cut": "Chia theo nhịp",
   "beats.cutNote": "Chia các clip nằm trên bài hát này tại mỗi dấu, trong một bước có thể hoàn tác.",

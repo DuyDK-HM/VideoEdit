@@ -2,6 +2,16 @@
   "_": {
     "name": "한국어"
   },
+  "batchSubs.busy": "An AI job is already running; stop it first.",
+  "batchSubs.done": "Captions placed on {0} clips.",
+  "batchSubs.doneWithErrors": "Captions placed on {0} clips; {1} failed. First: {2}",
+  "batchSubs.menu": "Batch subtitles (PhoWhisper)",
+  "batchSubs.menuStop": "Stop the AI job",
+  "batchSubs.menuTranslate": "Batch subtitles + translation",
+  "batchSubs.noClips": "No video clips on the timeline to subtitle.",
+  "batchSubs.started": "Subtitling {0} clips, one at a time on the GPU…",
+  "batchSubs.subtitling": "Subtitles {0}/{1} · {2} · {3}",
+  "batchSubs.translating": "Translating {0}/{1} · {2} · {3}",
   "beats.bpm": "{0} BPM",
   "beats.cut": "비트에서 나누기",
   "beats.cutNote": "이 노래 위의 클립을 각 표시에서 나눕니다. 한 번에 처리되며 실행 취소할 수 있습니다.",

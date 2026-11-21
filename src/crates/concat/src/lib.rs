@@ -2657,6 +2657,9 @@ fn start(project: Option<std::path::PathBuf>, smoke: Smoke) -> Result<(), slint:
                         "template" => state.save_template(),
                         "speech" => state.handle(Msg::Speech(SpeechMsg::Open)),
                         "download" => state.handle(Msg::Download(DownloadMsg::Open)),
+                        "batch-subs" => panes::batch_subs::start(&mut state, false),
+                        "batch-subs-translate" => panes::batch_subs::start(&mut state, true),
+                        "batch-subs-stop" => panes::batch_subs::stop(),
                         "clear-cache" => state.clear_project_cache(),
                         "settings" => state.handle(Msg::Settings(SettingsMsg::Open)),
                         "close-project" => {
