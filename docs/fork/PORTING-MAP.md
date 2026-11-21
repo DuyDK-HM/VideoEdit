@@ -58,7 +58,7 @@ Không có code cũ. Viết mới. Kết quả là keyframe `OffsetX/OffsetY/Sca
 |---|---|---|---|
 | `assets/thu_vien_am/` (`nhac/`, `sfx/`, `thu_vien.json`) | `audio/manifest.json` + file trên server, định dạng theo `docs/AUDIO_LIBRARY.md` | Server | Viết script đổi `thu_vien.json` sang manifest có `sha256` |
 | `orchestrator/editor/thu_vien_am.py` (thư viện "của tôi" dùng chung) | Concat: đổi `SOUNDS_MANIFEST`/`SOUNDS_REPO`/`SOUNDS_RELEASE` (`concat-host/src/models.rs`) | Rust + Server | Cho chỉnh URL trong Settings |
-| `orchestrator/main.py` (FastAPI, Basic Auth) | API đồng bộ project trên `rr` | Server | Có thể dùng lại khung FastAPI. Dùng token, upload/download .zip |
+| `orchestrator/main.py` (FastAPI, Basic Auth) | API đồng bộ project trên `rr` | Server | Dùng lại khung FastAPI. Dùng token, lưu blob theo sha256 (xem PLAN D9) |
 
 ## Không chuyển
 OCR (`app/services/subtitle_extractor.py`), che phụ đề (`webui/editor/bang_che.js`), TTS và lồng tiếng (`AIVoice/src/engines/*`, `dubbing.py`),

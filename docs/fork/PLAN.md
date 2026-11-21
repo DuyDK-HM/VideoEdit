@@ -19,6 +19,10 @@ Tài liệu liên quan:
 | D4 | AI hàng loạt chỉ gồm **tạo phụ đề hàng loạt** và **dịch hàng loạt** | Không làm che phụ đề, lồng tiếng, OCR |
 | D5 | Server riêng (`rr`) làm 2 việc: **thư viện SFX dùng chung** và **lưu/đồng bộ project**. Thêm việc khác sau, khi server mạnh hơn | Server hiện chỉ có CPU yếu |
 | D6 | Code mới để trong crate hoặc module riêng, sửa code upstream càng ít càng tốt | Upstream cập nhật gần như hằng ngày, làm vậy để merge ít xung đột |
+| D7 | `main` bám theo upstream, code riêng làm ở nhánh `vn/main` | Merge upstream vào `main` rồi mới merge `main` vào `vn/main`, nhờ vậy xung đột chỉ nằm ở một chỗ |
+| D8 | Engine phụ đề dùng **sidecar PhoWhisper + Demucs** (`adapter_autosub_cli.py`) | Chất lượng tiếng Việt đã kiểm chứng ở dự án cũ, không phải đổi model sang ggml |
+| D9 | Server đồng bộ dùng **FastAPI**. Media lưu theo nội dung: mỗi file đặt tên bằng sha256 của nó, chỉ upload những blob server chưa có. Gửi `concat.json` kèm danh sách hash | Có đồng bộ media. File chỉ lên server một lần, dùng lại được giữa các project. CPU yếu vẫn chạy được vì server chỉ ghi file, không xử lý gì thêm |
+| D10 | Motion tracking track cả **vị trí, cỡ và góc xoay**: track 2 điểm, suy ra phép biến đổi đồng dạng, ra keyframe `OffsetX/OffsetY/Scale/Rotation` | `KeyProperty` đã có sẵn đủ các trường này |
 
 ## Phạm vi
 
@@ -46,7 +50,7 @@ và đã chạy app thử tận tay.
 ### Phase 0: Môi trường và nhánh
 - [ ] Build được trên Windows: Rust 1.93+, FFmpeg 7 `win64-gpl-shared` (`FFMPEG_DIR`), LLVM (`LIBCLANG_PATH`), cmake. Chạy `cd src; cargo run -p concat`
 - [ ] Thêm remote upstream: `git remote add upstream https://github.com/jub0t/Concat.git`. Quy trình cập nhật: `git fetch upstream; git merge upstream/main`
-- [ ] Thống nhất nhánh: `main` theo upstream, code riêng ở nhánh `vn/main` (hoặc làm thẳng trên `main`, cần chốt)
+- [x] Tạo nhánh `vn/main` (D7)
 - [ ] `run.bat` ở thư mục gốc repo. Có exe rồi thì mở luôn. Mã mới hơn exe thì build (`cargo build --profile quick -p concat`) rồi mới mở. Nhớ đưa `%FFMPEG_DIR%\bin` vào PATH vì FFmpeg dùng bản DLL. Thêm `setup.bat` cài Rust, LLVM, FFmpeg cho máy mới
 - [ ] Cấu hình đường dẫn Python sidecar (`AIVoice/.venv/Scripts/python.exe` + thư mục adapter) trong Settings hoặc file cấu hình
 - Xong khi: app chạy được, mở và xuất thử một project.
@@ -66,7 +70,7 @@ Editor cũ thì tạo proxy H.264 720p ngay khi nhập, trình duyệt giải m�
 - Xong khi: dán link TikTok và YouTube đều tải về và nằm trong bin, file HEIC/CAF từ iPhone nhập được.
 
 ### Phase 3: Phụ đề hàng loạt và dịch hàng loạt
-- [ ] Chọn engine phụ đề: (a) whisper.cpp có sẵn trong Concat với model PhoWhisper đổi sang ggml, hoặc (b) gọi `adapter_autosub_cli.py` (PhoWhisper + Demucs CUDA). Đo chất lượng tiếng Việt rồi chọn
+- [ ] Phụ đề: gọi `adapter_autosub_cli.py` (PhoWhisper + Demucs CUDA) qua sidecar (D8)
 - [ ] Dịch: đóng gói `dich.py` + `dich_lo_json.py` + `de_xuat_dich.py` thành CLI Python (vào .srt → ra .srt), giữ phần kiểm tra chất lượng bản dịch tiếng Việt. Ollama/Gemini quản lý bằng `ollama_manager.py`, `gemini_proxy.py`
 - [ ] Phía Concat: một module sidecar chung (chạy tiến trình con, đọc JSON từng dòng, huỷ được, có hàng đợi GPU một việc một lúc), bắt chước mẫu `concat-host/src/tts.rs`
 - [ ] Hộp thoại hàng loạt: chọn nhiều media/clip → phụ đề → (tuỳ chọn) dịch → đặt lên lane caption bằng `concat_project::srt`
@@ -89,18 +93,24 @@ Editor cũ thì tạo proxy H.264 720p ngay khi nhập, trình duyệt giải m�
 
 ### Phase 7: Motion tracking
 - [ ] Nghiên cứu trước: tracker template/NCC trên frame thu nhỏ (thuần Rust), hay model ONNX qua `ort`
-- [ ] Track một vùng → ra keyframe `OffsetX/OffsetY` (có thể cả Scale) gắn vào clip chữ hoặc mask. `concat-project` đã có trường `motionTrack` dự phòng (`lib.rs:2800`)
-- Xong khi: chữ bám theo một vật trong 10 giây video không bị trôi rõ.
+- [ ] Track 2 điểm → suy ra phép đồng dạng (dịch, cỡ, xoay) → keyframe `OffsetX/OffsetY/Scale/Rotation` gắn vào clip chữ hoặc mask (D10). `concat-project` đã có trường `motionTrack` dự phòng (`lib.rs:2800`)
+- Xong khi: chữ bám theo một vật trong 10 giây video (vật có lại gần/ra xa và xoay) không bị trôi rõ.
 
 ### Phase 8: Server riêng (SFX và đồng bộ project)
 - [ ] SFX: dựng `audio/manifest.json` + file trên server theo đúng định dạng `docs/AUDIO_LIBRARY.md`. Đổi các hằng `SOUNDS_MANIFEST`, `SOUNDS_REPO`, `SOUNDS_RELEASE` (`concat-host/src/models.rs`) sang server mình hoặc cho chỉnh trong Settings. Chuyển kho SFX CC0 của dự án cũ (`assets/thu_vien_am/`) lên
-- [ ] Đồng bộ project: API HTTP nhỏ trên `rr` (token, upload/download .zip từ Phase 5, danh sách project, phiên bản). Có thể dùng lại FastAPI của dự án cũ
+- [ ] Đồng bộ project (D9): FastAPI trên `rr`, xác thực bằng token. API:
+  - `POST /blobs/missing` (gửi danh sách sha256, nhận lại những hash server chưa có)
+  - `PUT /blobs/{sha256}` (upload kiểu stream; server tính lại hash rồi mới nhận file)
+  - `GET /blobs/{sha256}`
+  - `PUT/GET /projects/{id}` (`concat.json` + bảng đường dẫn tương đối → hash, lưu nhiều phiên bản)
+  - `GET /projects`
+  - Bỏ qua `cache/`, proxy và bản xuất. Máy nhận kéo những blob còn thiếu về rồi relink
 - [ ] Deploy theo cách chép file qua `scp` lên `rr`, chạy lệnh từ PowerShell
 - Xong khi: mở project trên máy khác thấy đủ SFX, đẩy và kéo project qua server được.
 
 ## Thứ tự và phụ thuộc
 - Phase 0 → 1 → 2 → 3 → 4 → 5 → 8. Phase 6 và 7 làm lúc nào cũng được, sau Phase 0.
-- Phase 8 cần Phase 5 cho phần đồng bộ. Phần SFX của Phase 8 làm độc lập được.
+- Phase 8 dùng lại phần liệt kê media và relink của Phase 5 (không dùng .zip). Phần SFX của Phase 8 làm độc lập được.
 
 ## Rủi ro
 - Upstream đổi định dạng project (`concat-doc` mới có ticks, typed id) → merge xung đột. Giảm rủi ro: merge upstream thường xuyên, code riêng để tách khỏi code upstream.
@@ -109,7 +119,4 @@ Editor cũ thì tạo proxy H.264 720p ngay khi nhập, trình duyệt giải m�
 - Muốn phát hành bản đã sửa thì phải đổi tên và icon (`TRADEMARK.md`). Dùng cá nhân thì không cần.
 
 ## Câu hỏi còn mở
-1. Làm trên nhánh `main` hay nhánh riêng `vn/main`?
-2. Engine phụ đề: whisper.cpp + PhoWhisper ggml, hay giữ sidecar PhoWhisper + Demucs? (đo rồi mới chốt)
-3. Server đồng bộ: dùng lại FastAPI trên `rr` hay viết mới? Có cần đồng bộ cả media nặng không, hay chỉ `concat.json`?
-4. Motion tracking cần mức nào: chỉ vị trí, hay cả cỡ và góc xoay?
+- Upload blob lớn (file 4K vài GB) có cần chia phần để tải tiếp khi rớt mạng không? Chốt khi đo mạng tới `rr`.
