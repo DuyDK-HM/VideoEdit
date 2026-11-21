@@ -78,6 +78,20 @@ pub struct SavedLayout {
     pub maximized: bool,
 }
 
+/// A switch that is on until the person turns it off: a `bool` whose
+/// default is `true`, saved as a plain `true`/`false`. A field of its own
+/// type, so [`Preferences`] keeps its derived `Default` and upstream's new
+/// fields merge without touching a hand-written one.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct OnByDefault(pub bool);
+
+impl Default for OnByDefault {
+    fn default() -> Self {
+        Self(true)
+    }
+}
+
 /// Remembered preferences.
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
@@ -130,12 +144,10 @@ pub struct Preferences {
     /// a clip can be dropped at the playhead beyond everything else.
     pub playhead_stops_at_end: bool,
     /// Proxies: a file larger than HD gets a smaller copy written in the
-    /// background, and playback at Half and Quarter reads that copy. Off
-    /// by default: a proxy is a full re-encode of every large
-    /// file, on the CPU of a phone or through a hardware encoder a laptop
-    /// may not take (an HDR one opened NVENC first), and the person who
-    /// wants one for smoother playback turns it on in Settings.
-    pub proxies: bool,
+    /// background, and playback reads that copy at every quality. On by
+    /// default in this fork (upstream has it off, for the re-encode it
+    /// costs a phone): 4K that stutters is the problem it is here for.
+    pub proxies: OnByDefault,
     /// Drawing in software: the window and the compositor on the
     /// platform's software rasteriser (WARP, lavapipe) instead of the GPU,
     /// as the person chose in Settings > General or with `concat

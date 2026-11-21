@@ -362,19 +362,19 @@ impl MonitorPane {
         let Some((clips, settings)) = studio.preview_clips() else {
             return;
         };
-        let quality = self.quality_of(studio.project());
         let spec = FrameSpec {
             time: f64::from(time),
             width,
             height,
             moving,
-            // Playback reads the proxies at Half and Quarter; Full plays
-            // the files themselves, or Full would be the proxy blurred up.
-            // With proxies off in Settings it plays the files at every
+            // Playback reads the proxies at every quality, Full included
+            // (upstream plays the files at Full): a 4K file decoded live
+            // is what stutters, and the proxy is half its size, sharp at
+            // a 1080p Full. Paused, the files themselves are drawn. With
+            // proxies off in Settings it plays the files at every
             // quality, a proxy left from before included.
-            proxy: studio.prefs.proxies
-                && (studio.playing || studio.source.as_ref().is_some_and(|source| source.playing))
-                && quality > 0,
+            proxy: studio.prefs.proxies.0
+                && (studio.playing || studio.source.as_ref().is_some_and(|source| source.playing)),
             color_space: studio.project().active().video.color_space,
             canvas: studio.project().active().video.canvas,
             nearest,

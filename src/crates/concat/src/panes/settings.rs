@@ -392,7 +392,7 @@ impl SettingsPane {
             }
             SettingsMsg::ProxiesChanged(on) => {
                 log::info!("settings: Proxies {}", on_off(on));
-                studio.prefs.proxies = on;
+                studio.prefs.proxies = crate::prefs::OnByDefault(on);
                 studio.prefs.save(&studio.host.dirs);
                 // On, the media already in the project gets its proxies
                 // straight away (refresh_art's stamp holds the switch);
@@ -1024,7 +1024,7 @@ impl SettingsPane {
                 .position(|level| *level == log::max_level())
                 .unwrap_or(2) as i32,
             playhead_stops: self.playhead_stops,
-            proxies: studio.prefs.proxies,
+            proxies: studio.prefs.proxies.0,
             remember_layout: studio.prefs.remembers_layout(),
             layout_switchable: !crate::platform::phone(),
             gpu: !studio.prefs.draws_in_software(),

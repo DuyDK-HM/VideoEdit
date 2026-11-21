@@ -586,7 +586,7 @@
   "settings.packageOpened": "Concat {0} đã được tải và đang mở trong trình cài đặt gói. Hãy cài ở đó, rồi khởi động lại Concat.",
   "settings.playhead": "Đầu phát",
   "settings.proxies": "Proxy",
-  "settings.proxiesHint": "Tắt: phát lại đọc tệp của bạn như nguyên bản. Bật: mỗi video lớn hơn HD có một bản sao nhỏ hơn, tạo một lần trong nền, để phát mượt hơn ở Một nửa và Một phần tư.",
+  "settings.proxiesHint": "Tắt: phát lại đọc tệp của bạn như nguyên bản. Bật: mỗi video lớn hơn HD có một bản sao nhỏ hơn, tạo một lần trong nền, phát lại sẽ đọc bản sao này ở mọi mức chất lượng cho mượt hơn.",
   "settings.rememberLayout": "Ghi nhớ bố cục",
   "settings.rememberLayoutHint": "Bật: Concat mở với các bảng ở nơi bạn để lại và cửa sổ ở kích thước gần nhất. Tắt: mỗi lần mở đều bắt đầu với bố cục mặc định.",
   "settings.restartLater": "Để sau",

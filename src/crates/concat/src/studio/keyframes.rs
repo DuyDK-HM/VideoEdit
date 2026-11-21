@@ -2178,7 +2178,7 @@ impl Studio {
             self.on_start,
             self.art_pending.len() + self.posters_pending.len(),
             // Proxies switched on in Settings are seen to at once.
-            self.prefs.proxies,
+            self.prefs.proxies.0,
         );
         if self.art_stamp == Some(stamp) {
             if !self.on_start {
