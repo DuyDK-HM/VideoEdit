@@ -107,6 +107,8 @@ import {
     TrackSize,
 } from "timeline/model.slint";
 
+// Fork: the colour scopes' global, set from Rust (panes/scopes.rs).
+import { ForkScopes } from "fork/scopes.slint";
 // Re-exported so main.rs can reach the globals and the struct.
 import {
     KeyEditor,
@@ -116,6 +118,7 @@ import {
 import { SpeedRamp } from "inspector/speed-ramp.slint";
 
 export {
+    ForkScopes,
     Curves,
     Fmt,
     Focus,

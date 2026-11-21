@@ -55,6 +55,8 @@ pub mod projects;
 pub mod proxy;
 pub mod record;
 pub mod reverse;
+/// Fork: colour scopes of a picture.
+pub mod scopes;
 mod route;
 pub mod session;
 /// Fork: the old project's AI (subtitles, translation) as a child process.

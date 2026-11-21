@@ -1,0 +1,40 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-FileCopyrightText: 2026 Concat fork contributors
+
+import { Theme } from "../theme/theme.slint";
+
+// Fork: colour scopes of the paused monitor frame, set from Rust
+// (panes/scopes.rs) and shown under the colour wheels. A global so the
+// images reach the inspector without a property threaded through every
+// layer between the window and it.
+export global ForkScopes {
+    in property <image> waveform;
+    in property <image> vectorscope;
+    in property <image> histogram;
+    /// A frame has been measured since the project opened.
+    in property <bool> ready;
+}
+
+export component ScopesRow inherits HorizontalLayout {
+    padding-left: Theme.pad;
+    padding-right: Theme.pad;
+    padding-bottom: 6px;
+    spacing: 6px;
+    height: 96px;
+
+    Image {
+        source: ForkScopes.waveform;
+        image-fit: fill;
+        horizontal-stretch: 2;
+    }
+    Image {
+        source: ForkScopes.vectorscope;
+        image-fit: contain;
+        horizontal-stretch: 1;
+    }
+    Image {
+        source: ForkScopes.histogram;
+        image-fit: fill;
+        horizontal-stretch: 2;
+    }
+}

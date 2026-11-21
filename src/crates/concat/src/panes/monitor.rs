@@ -280,6 +280,8 @@ impl MonitorPane {
             Ok(image) => {
                 self.image = image;
                 self.inexact = !exact;
+                // Fork: the colour scopes measure the frame just shown.
+                crate::panes::scopes::after_frame(studio, spec.time);
             }
             Err(error) => {
                 log::warn!(

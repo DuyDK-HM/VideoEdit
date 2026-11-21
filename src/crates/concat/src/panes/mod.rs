@@ -30,6 +30,8 @@ pub mod package;
 pub mod pace;
 pub mod project;
 pub mod relink;
+/// Fork: colour scopes of the paused frame.
+pub mod scopes;
 pub mod settings;
 pub mod sounds;
 pub mod speech;

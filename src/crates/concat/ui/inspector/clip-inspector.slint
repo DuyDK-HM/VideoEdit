@@ -12,6 +12,7 @@ import {
     SectionHeader,
 } from "../primitives/panel.slint";
 import { Button, Progress } from "../primitives/modal.slint";
+import { ForkScopes, ScopesRow } from "../fork/scopes.slint";
 import { SegmentedControl } from "../primitives/segmented-control.slint";
 import { MotionPicker, MotionTiles } from "motion-picker.slint";
 import { Select } from "../primitives/select.slint";
@@ -583,6 +584,12 @@ export component PresetStack inherits VerticalLayout {
                                     }
                                 }
                             }
+                        }
+                        // Fork: the paused frame's scopes under its wheels.
+                        for g in root.wheel-groups: Rectangle {
+                            visible: link.open && g.entry == index && ForkScopes.ready;
+                            height: link.open && g.entry == index && ForkScopes.ready ? 96px : 0;
+                            ScopesRow { }
                         }
                         for g in root.curve-groups: Rectangle {
                             visible: link.open && g.entry == index;
