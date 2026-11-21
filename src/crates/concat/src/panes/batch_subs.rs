@@ -20,7 +20,7 @@ use std::sync::{Mutex, OnceLock};
 use concat_host::sidecar::{self, Bridge};
 use concat_project::model::ClipKind;
 
-use crate::host::{on_ui_in_project, project_epoch, spawn_long_in_project};
+use crate::host::{on_ui_in_project, project_epoch, spawn_long};
 use crate::i18n::tf;
 use crate::panes::Msg;
 use crate::panes::captions::CaptionsMsg;
@@ -37,7 +37,9 @@ struct Target {
     media: PathBuf,
     start: f64,
     source_start: f64,
+    /// Media seconds the clip shows.
     duration: f64,
+    speed: f64,
 }
 
 /// Starts a batch over the selected video clips (or all of them).
@@ -76,6 +78,7 @@ pub fn start(studio: &mut Studio, translate: bool) {
                 source_start: clip.source_start,
                 // Timeline seconds at the clip's speed are source seconds.
                 duration: clip.duration * clip.speed.max(0.01),
+                speed: clip.speed.max(0.01),
             })
         })
         .collect();
@@ -89,7 +92,9 @@ pub fn start(studio: &mut Studio, translate: bool) {
     studio.notify(&tf("batchSubs.started", &[&targets.len()]), false);
     let epoch = project_epoch();
     let folder = project.join("subtitles");
-    spawn_long_in_project(
+    // Delivered whatever project is open by then, so the switch is always
+    // let go; the captions themselves only land in the project they were for.
+    spawn_long(
         move || run(&bridge, &targets, &folder, translate, &cancel, epoch),
         |studio, _, _, (placed, failures): (usize, Vec<String>)| {
             *running().lock().unwrap_or_else(|poisoned| poisoned.into_inner()) = None;
@@ -142,7 +147,7 @@ fn run(
             }
         };
         let out = folder.join(format!("placed-{index}.srt"));
-        match sidecar::write_placed(&srt, &out, target.start, target.source_start, target.duration) {
+        match sidecar::write_placed(&srt, &out, target.start, target.source_start, target.duration, target.speed) {
             Ok(0) => {}
             Ok(_) => {
                 placed += 1;

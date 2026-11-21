@@ -137,7 +137,20 @@ pub fn run(
                 Line::Error(message) => outcome = Err(message),
                 Line::Other => {}
             },
-            Err(mpsc::RecvTimeoutError::Timeout) => {}
+            Err(mpsc::RecvTimeoutError::Timeout) => {
+                // Ended, though its stdout may stay open in a process it
+                // started (Ollama's server): what it said is all there is.
+                if matches!(child.try_wait(), Ok(Some(_))) {
+                    for line in incoming.try_iter() {
+                        match parse(&line) {
+                            Line::Done(path) => outcome = Ok(path),
+                            Line::Error(message) => outcome = Err(message),
+                            _ => {}
+                        }
+                    }
+                    break;
+                }
+            }
             Err(mpsc::RecvTimeoutError::Disconnected) => break,
         }
     }
@@ -158,16 +171,17 @@ fn kill_tree(child: &mut std::process::Child) {
 }
 
 /// The cues of a media file's subtitles as they fall on a clip of it: the
-/// clip shows the media from `source_start` for `duration` seconds (at
-/// normal speed) from `start` on the timeline. Cues outside are dropped,
-/// cues across an edge are cut at it.
-pub fn place_on_clip(cues: &[Cue], start: f64, source_start: f64, duration: f64) -> Vec<Cue> {
+/// clip shows the media from `source_start` for `duration` media seconds,
+/// played at `speed`, from `start` on the timeline. Cues outside are
+/// dropped, cues across an edge are cut at it.
+pub fn place_on_clip(cues: &[Cue], start: f64, source_start: f64, duration: f64, speed: f64) -> Vec<Cue> {
     let (from, to) = (source_start, source_start + duration);
+    let speed = speed.max(0.01);
     cues.iter()
         .filter(|cue| cue.end > from && cue.start < to)
         .map(|cue| Cue {
-            start: cue.start.max(from) - from + start,
-            end: cue.end.min(to) - from + start,
+            start: (cue.start.max(from) - from) / speed + start,
+            end: (cue.end.min(to) - from) / speed + start,
             text: cue.text.clone(),
         })
         .collect()
@@ -181,10 +195,11 @@ pub fn write_placed(
     start: f64,
     source_start: f64,
     duration: f64,
+    speed: f64,
 ) -> Result<usize, String> {
     let bytes = std::fs::read(srt_file).map_err(|error| format!("{}: {error}", srt_file.display()))?;
     let cues = srt::parse(&String::from_utf8_lossy(&bytes)).map_err(|error| error.to_string())?;
-    let placed = place_on_clip(&cues, start, source_start, duration);
+    let placed = place_on_clip(&cues, start, source_start, duration, speed);
     std::fs::write(out, srt::write(&placed)).map_err(|error| format!("{}: {error}", out.display()))?;
     Ok(placed.len())
 }
@@ -210,7 +225,10 @@ mod tests {
         let cue = |start: f64, end: f64, text: &str| Cue { start, end, text: text.to_owned() };
         let cues = [cue(0.0, 2.0, "before"), cue(4.0, 6.0, "across"), cue(7.0, 8.0, "inside"), cue(20.0, 21.0, "after")];
         // The clip shows media seconds 5..15 from timeline second 100.
-        let placed = place_on_clip(&cues, 100.0, 5.0, 10.0);
+        let placed = place_on_clip(&cues, 100.0, 5.0, 10.0, 1.0);
         assert_eq!(placed, [cue(100.0, 101.0, "across"), cue(102.0, 103.0, "inside")]);
+        // At double speed the same media seconds take half the timeline.
+        let placed = place_on_clip(&cues, 100.0, 5.0, 10.0, 2.0);
+        assert_eq!(placed, [cue(100.0, 100.5, "across"), cue(101.0, 101.5, "inside")]);
     }
 }
