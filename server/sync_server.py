@@ -113,8 +113,12 @@ def list_projects() -> dict:
     for folder in sorted((DATA / "projects").iterdir()):
         vs = versions(folder)
         if vs:
-            latest = json.loads((folder / f"{vs[-1]}.json").read_text(encoding="utf-8"))
-            out.append({"id": folder.name, "name": latest["name"], "latest": vs[-1]})
+            path = folder / f"{vs[-1]}.json"
+            latest = json.loads(path.read_text(encoding="utf-8"))
+            out.append({"id": folder.name, "name": latest["name"], "latest": vs[-1],
+                        "updated": path.stat().st_mtime})
+    # The one pushed last first: what a second machine wants to pull.
+    out.sort(key=lambda p: p["updated"], reverse=True)
     return {"projects": out}
 
 

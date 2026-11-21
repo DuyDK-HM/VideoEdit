@@ -51,8 +51,9 @@ def test_a_project_version_needs_its_media_uploaded_first(client):
     client.put(f"/blobs/{h}", content=data, headers=AUTH)
     assert client.put("/projects/tap-1", json=body, headers=AUTH).json() == {"version": 1}
     assert client.put("/projects/tap-1", json=body, headers=AUTH).json() == {"version": 2}
-    assert client.get("/projects", headers=AUTH).json() == {
-        "projects": [{"id": "tap-1", "name": "Tap 1", "latest": 2}]}
+    listed = client.get("/projects", headers=AUTH).json()["projects"]
+    assert [(p["id"], p["name"], p["latest"]) for p in listed] == [("tap-1", "Tap 1", 2)]
+    assert listed[0]["updated"] > 0
     got = client.get("/projects/tap-1?version=1", headers=AUTH).json()
     assert got["version"] == 1 and got["files"] == {"media/a.mp4": h}
     assert client.get("/projects/tap-1?version=9", headers=AUTH).status_code == 404

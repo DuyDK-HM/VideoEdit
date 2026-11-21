@@ -1,0 +1,16 @@
+# The fork's sync server as a user service on rr:
+#   cp concat-sync.service ~/.config/systemd/user/ && systemctl --user enable --now concat-sync
+# Listens on the Tailscale address only; the token is read from ~/concat-sync/token.
+[Unit]
+Description=Concat sync server (projects and sound library)
+After=network-online.target
+
+[Service]
+Environment=SYNC_DATA=%h/concat-sync-data
+WorkingDirectory=%h/concat-sync
+ExecStart=/bin/sh -c 'SYNC_TOKEN="$(cat %h/concat-sync/token)" exec %h/concat-sync/venv/bin/uvicorn sync_server:app --host 100.114.205.62 --port 8700'
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

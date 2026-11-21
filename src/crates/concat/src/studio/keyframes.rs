@@ -2647,6 +2647,8 @@ impl Studio {
                 row("motion-track", t("motionTrack.menu"), Glyph::Keyframe, "", !self.selection.is_empty()),
                 row("pack", t("package.packMenu"), Glyph::Export, "", true),
                 row("unpack", t("package.openMenu"), Glyph::Import, "", true),
+                row("sync-push", t("sync.pushMenu"), Glyph::Export, "", true),
+                row("sync-pull", t("sync.pullMenu"), Glyph::Import, "", true),
                 row(
                     "clear-cache",
                     t("studio.clearProjectCache"),

@@ -60,10 +60,29 @@ pub const SOUNDS_REPO: &str = "concatapp/assets";
 /// repository does not take a sound off the shelf.
 pub const SOUNDS_RELEASE: &str = "audio-v1";
 
+/// Fork: the base URL of our own sound library (`.../audio`, holding
+/// `manifest.json` and the files), from `CONCAT_SOUNDS_BASE`; none for the
+/// upstream library.
+pub fn own_sounds_base() -> Option<String> {
+    std::env::var("CONCAT_SOUNDS_BASE")
+        .ok()
+        .map(|base| base.trim().trim_end_matches('/').to_owned())
+        .filter(|base| !base.is_empty())
+}
+
+/// The manifest's URL: our own server's when configured, upstream's otherwise.
+pub fn sounds_manifest() -> String {
+    own_sounds_base().map_or_else(|| SOUNDS_MANIFEST.to_owned(), |base| format!("{base}/manifest.json"))
+}
+
 /// Where to try for a sound's file, in order: the release, then the
 /// repository. The bytes are checked against the manifest's digest
 /// whichever answers.
 pub fn sound_sources(file: &str) -> Vec<String> {
+    // Fork: the library on our own server when CONCAT_SOUNDS_BASE names it.
+    if let Some(base) = own_sounds_base() {
+        return vec![format!("{base}/{file}")];
+    }
     vec![
         format!("https://github.com/{SOUNDS_REPO}/releases/download/{SOUNDS_RELEASE}/{file}"),
         format!("https://raw.githubusercontent.com/{SOUNDS_REPO}/main/audio/{file}"),

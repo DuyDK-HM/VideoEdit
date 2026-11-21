@@ -158,5 +158,29 @@
   "motionTrack.tooShort": {
     "en": "Too short to track.",
     "vi": "Đoạn quá ngắn để theo dõi."
+  },
+  "sync.pushMenu": {
+    "en": "Push project to server",
+    "vi": "Đẩy project lên server"
+  },
+  "sync.pullMenu": {
+    "en": "Pull latest project from server",
+    "vi": "Kéo project mới nhất từ server"
+  },
+  "sync.pushing": {
+    "en": "Pushing the project and the files the server lacks…",
+    "vi": "Đang đẩy project cùng những file server chưa có…"
+  },
+  "sync.pushed": {
+    "en": "Pushed {0} as version {1} ({2} files uploaded).",
+    "vi": "Đã đẩy {0}, phiên bản {1} (tải lên {2} file)."
+  },
+  "sync.pulling": {
+    "en": "Pulling the latest project…",
+    "vi": "Đang kéo project mới nhất…"
+  },
+  "sync.nothingOnServer": {
+    "en": "No project on the server yet.",
+    "vi": "Server chưa có project nào."
   }
 }

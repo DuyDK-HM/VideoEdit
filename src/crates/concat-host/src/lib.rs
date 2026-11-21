@@ -63,6 +63,8 @@ pub mod session;
 pub mod sidecar;
 pub mod sounds;
 pub mod stabilize;
+/// Fork: projects pushed to and pulled from our own server.
+pub mod sync;
 pub mod templates;
 pub mod titles;
 /// Fork: motion tracking of two points through a video.

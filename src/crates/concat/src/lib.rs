@@ -2664,6 +2664,8 @@ fn start(project: Option<std::path::PathBuf>, smoke: Smoke) -> Result<(), slint:
                         "motion-track" => panes::motion_track::track_selected(&mut state),
                         "pack" => panes::package::pack_open_project(&mut state),
                         "unpack" => panes::package::open_package(),
+                        "sync-push" => panes::sync::push_open_project(&mut state),
+                        "sync-pull" => panes::sync::pull_latest(&mut state),
                         "clear-cache" => state.clear_project_cache(),
                         "settings" => state.handle(Msg::Settings(SettingsMsg::Open)),
                         "close-project" => {

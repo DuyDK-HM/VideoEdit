@@ -384,7 +384,7 @@ pub fn cached_catalogue(dirs: &AppDirs) -> Option<Catalogue> {
 pub fn fetch_catalogue(dirs: &AppDirs) -> Result<Option<Catalogue>, String> {
     use std::io::Read;
     let response = match crate::net::get(
-        crate::models::SOUNDS_MANIFEST,
+        &crate::models::sounds_manifest(),
         std::time::Duration::from_secs(15),
         std::time::Duration::from_secs(30),
         crate::net::Trust::Shipped,

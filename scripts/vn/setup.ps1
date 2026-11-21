@@ -76,6 +76,8 @@ set "FFMPEG_DIR=$ffDir"
 set "LIBCLANG_PATH=$llvmBin"
 set "PATH=$ffDir\bin;$llvmBin;$cmakeBin;%USERPROFILE%\.cargo\bin;%PATH%"
 $sidecar
+@rem This machine's own settings (sync server, token, sound library): vendor\local.cmd.
+if exist "%~dp0local.cmd" call "%~dp0local.cmd"
 "@ | Set-Content -Encoding ascii (Join-Path $vendor "env.cmd")
 
 Write-Host "done: vendor\env.cmd written. Start the editor with run.bat."

@@ -38,6 +38,8 @@ pub mod settings;
 pub mod sounds;
 pub mod speech;
 pub mod start;
+/// Fork: push to and pull from our own server.
+pub mod sync;
 pub mod timeline;
 pub mod voiceover;
 
