@@ -1081,6 +1081,8 @@ fn start(project: Option<std::path::PathBuf>, smoke: Smoke) -> Result<(), slint:
                         "mp4", "mov", "mkv", "webm", "avi", "m4v", "mp3", "wav", "aac", "m4a",
                         "flac", "ogg", "png", "jpg", "jpeg", "webp", "gif", "bmp", "tif", "tiff",
                         "svg",
+                        // Fork: phone and camera files (HEIC is converted on import).
+                        "heic", "heif", "avif", "caf", "amr", "mts", "m2ts", "mxf",
                     ],
                 )),
                 |studio, _, _, paths| studio.handle(Msg::Media(MediaMsg::Import(paths))),

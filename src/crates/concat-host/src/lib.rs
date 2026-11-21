@@ -39,6 +39,8 @@ pub mod media;
 pub mod memory;
 pub mod models;
 pub mod net;
+/// Fork: HEIC/HEIF photos converted to JPEG before import.
+pub mod normalize;
 pub mod playback;
 pub mod preview;
 #[cfg(test)]

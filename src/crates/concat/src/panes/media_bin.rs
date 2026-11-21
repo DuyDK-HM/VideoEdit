@@ -15,11 +15,12 @@ use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 
 use concat_host::media::{self, MediaSummary};
+use concat_host::normalize;
 use concat_project::Command;
 use concat_project::model::{self, MediaItem, MediaOrigin, Project};
 
 use crate::format::{WAVE_FLOOR, wave_path};
-use crate::host::{probe_error, spawn_in_project};
+use crate::host::{probe_error, spawn_in_project, spawn_long_in_project};
 use crate::i18n::{t, tf};
 use crate::panes::Msg;
 use crate::studio::Studio;
@@ -164,18 +165,37 @@ impl MediaBin {
                 });
             }
             MediaMsg::Import(paths) => {
-                if paths.is_empty() || studio.session.is_none() {
+                let Some(project) = studio
+                    .session
+                    .as_ref()
+                    .map(|session| PathBuf::from(session.path()))
+                else {
+                    return;
+                };
+                if paths.is_empty() {
                     return;
                 }
-                spawn_in_project(
-                    move || {
-                        paths
-                            .iter()
-                            .map(|path| media::probe(&path.to_string_lossy()))
-                            .collect::<Vec<_>>()
-                    },
-                    |studio, _, _, results| studio.handle(Msg::Media(MediaMsg::Imported(results))),
-                );
+                // Fork: an iPhone photo (HEIC) is converted to a JPEG
+                // first (concat_host::normalize), which takes a moment per
+                // photo, so a batch holding one runs on the long lane.
+                let converting = paths.iter().any(|path| normalize::needed(path));
+                let work = move || {
+                    paths
+                        .iter()
+                        .map(|path| {
+                            let path = normalize::prepare(&project, path)?;
+                            media::probe(&path.to_string_lossy())
+                        })
+                        .collect::<Vec<_>>()
+                };
+                let then = |studio: &mut Studio, _: &_, _: &_, results| {
+                    studio.handle(Msg::Media(MediaMsg::Imported(results)))
+                };
+                if converting {
+                    spawn_long_in_project(work, then);
+                } else {
+                    spawn_in_project(work, then);
+                }
             }
             MediaMsg::Imported(results) => {
                 let mut commands = Vec::new();
