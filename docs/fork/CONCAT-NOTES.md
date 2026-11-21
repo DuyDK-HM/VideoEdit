@@ -24,7 +24,16 @@
   - `concat-cli`: `render`, `api`, `serve`.
 
 ## Thêm tính năng ở đâu
-- Tác vụ chạy tiến trình ngoài rồi đưa file vào project: làm theo mẫu `concat-host/src/tts.rs` (ghi WAV vào `audio/` rồi import).
+- Tác vụ chạy lâu rồi đưa file vào bin: mẫu là TTS ở `concat/src/panes/speech.rs` (`fn run`, nhánh `SpeechMsg::Finished`). (`concat-host/src/tts.rs` không tồn tại.)
+  - Spawn bằng `crate::host::spawn_long_in_project(work, then)` (`concat/src/host.rs`). Job tự huỷ khi đóng project. `then` chạy trên event loop qua `slint::invoke_from_event_loop`.
+  - Một việc một lúc, huỷ được: `concat_host::jobs::SingleFlight` (`gate.begin(..)?`, `job.cancelled()`, `gate.cancel()`). Mẫu gọn nhất: `concat-host/src/reverse.rs`.
+  - Báo tiến độ: `on_ui_in_project(epoch, |studio,_,_| studio.handle(Msg::X(..)))`.
+  - Nhập file: `studio.handle(Msg::Media(MediaMsg::Import(vec![path])))`, hoặc probe trước rồi `Command::AddMedia`.
+- Đường nhập media: mọi lối vào (nút trong bin, File › Import, kéo thả) đều về `MediaMsg::Import` (`concat/src/panes/media_bin.rs`), đi tiếp `media::probe` (FFmpeg) rồi `Command::Batch` gồm các `AddMedia`. Không có allowlist nào chặn file; nút trong bin chỉ lọc đuôi file trong hộp thoại (`concat/src/lib.rs`, khoảng dòng 1079). Chỗ hook chuẩn hoá (Phase 2): worker của `MediaMsg::Import`, chạy trước `probe`.
+- Dialog mới: theo mẫu `ui/dialogs/confirm.slint` (đơn giản) hoặc `relink.slint` + `panes/relink.rs` (có state). Phải sửa: `ui/app.slint` (property, callback, điều kiện modal, Escape), `panes/mod.rs` (`Msg::X`), `studio/project_files.rs` `handle()`, `studio/keyframes.rs` (`set_changed`, và `menu_bar()` cho menu), `lib.rs` (`app.on_*`, `on_app_menu_selected`), `locales/*.json`.
+- Nối nhiều media lên timeline: `Command::AddClipsInSequence { media_ids, track_id, start, ripple }`. API không có request riêng, gửi qua `Request::EditApply`.
+- SRT lên lane caption: `CaptionsPane::import_srt` (`panes/captions.rs`), lần lượt `srt::parse` → `srt_commands` → `Command::Batch` (một bước undo).
+- `consolidate.rs` là render nhóm clip thành một file (merge), không phải đóng gói project. Hiện chưa có tính năng đóng gói.
 - Muốn CLI/server/MCP đều gọi được thì thêm variant `Request` vào `concat-api/src/message.rs`.
 - Phụ đề: dùng `concat_project::srt::parse` và các command thêm title. Caption là clip Text nằm trên lane.
 - Effect mới: viết package dữ liệu (`effect.toml` + `[ffmpeg]` hoặc `[wgsl]` + `fixtures.toml`). Package có sẵn được nhúng lúc build (`concat-effects/build.rs`); package của người dùng nạp lúc chạy (`Catalogue::load_dir`).
