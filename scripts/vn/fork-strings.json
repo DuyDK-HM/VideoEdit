@@ -55,6 +55,26 @@
     "en": "Stop",
     "vi": "Dừng"
   },
+  "merge.menu": {
+    "en": "Merge selected files",
+    "vi": "Ghép các file đã chọn"
+  },
+  "merge.pickTwo": {
+    "en": "Select at least two files in the bin to merge.",
+    "vi": "Chọn ít nhất hai file trong bin để ghép."
+  },
+  "merge.started": {
+    "en": "Merging {0} files in name order…",
+    "vi": "Đang ghép {0} file theo thứ tự tên…"
+  },
+  "merge.joined": {
+    "en": "Merged without re-encoding; the result is in the bin.",
+    "vi": "Đã ghép không mã hoá lại; file kết quả nằm trong bin."
+  },
+  "merge.onTimeline": {
+    "en": "The files differ, so {0} clips went on the timeline in name order. Export to make one video.",
+    "vi": "Các file khác thông số nên {0} clip đã được đặt lên timeline theo thứ tự tên. Bấm Export để ra một video."
+  },
   "batchSubs.menu": {
     "en": "Batch subtitles (PhoWhisper)",
     "vi": "Phụ đề hàng loạt (PhoWhisper)"

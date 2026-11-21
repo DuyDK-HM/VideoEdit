@@ -39,6 +39,8 @@ pub mod logs;
 pub mod machine;
 pub mod media;
 pub mod memory;
+/// Fork: merging many files into one, by name.
+pub mod merge;
 pub mod models;
 pub mod net;
 /// Fork: HEIC/HEIF photos converted to JPEG before import.

@@ -2657,6 +2657,7 @@ fn start(project: Option<std::path::PathBuf>, smoke: Smoke) -> Result<(), slint:
                         "template" => state.save_template(),
                         "speech" => state.handle(Msg::Speech(SpeechMsg::Open)),
                         "download" => state.handle(Msg::Download(DownloadMsg::Open)),
+                        "merge" => panes::merge::merge_selected(&mut state),
                         "batch-subs" => panes::batch_subs::start(&mut state, false),
                         "batch-subs-translate" => panes::batch_subs::start(&mut state, true),
                         "batch-subs-stop" => panes::batch_subs::stop(),

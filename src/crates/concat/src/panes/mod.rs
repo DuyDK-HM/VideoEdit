@@ -22,6 +22,8 @@ pub mod download;
 pub mod export;
 pub mod glide;
 pub mod media_bin;
+/// Fork: File > Merge selected files.
+pub mod merge;
 pub mod monitor;
 pub mod pace;
 pub mod project;
