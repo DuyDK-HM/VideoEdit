@@ -146,10 +146,12 @@ pub fn track(
 
 /// How the pair moved from `first` to `now`: the midpoint's move (in
 /// fractions of the picture), the length's ratio and the angle's turn in
-/// degrees, clockwise.
-pub fn motion(first: &Sample, now: &Sample) -> ((f64, f64), f64, f64) {
+/// degrees, clockwise. `aspect` is the picture's width over its height:
+/// lengths and angles are measured in pixels, not in fractions, or a turn
+/// on a 16:9 picture would read as a stretch.
+pub fn motion(first: &Sample, now: &Sample, aspect: f64) -> ((f64, f64), f64, f64) {
     let mid = |s: &Sample| ((s.a.0 + s.b.0) / 2.0, (s.a.1 + s.b.1) / 2.0);
-    let span = |s: &Sample| (s.b.0 - s.a.0, s.b.1 - s.a.1);
+    let span = |s: &Sample| ((s.b.0 - s.a.0) * aspect, s.b.1 - s.a.1);
     let ((x0, y0), (x1, y1)) = (mid(first), mid(now));
     let ((u0, v0), (u1, v1)) = (span(first), span(now));
     let (l0, l1) = (u0.hypot(v0), u1.hypot(v1));
@@ -189,9 +191,21 @@ mod tests {
         let first = Sample { at: 0.0, a: (0.4, 0.5), b: (0.6, 0.5) };
         // Moved right by 0.1, twice as long, turned a quarter clockwise.
         let now = Sample { at: 1.0, a: (0.6, 0.3), b: (0.6, 0.7) };
-        let ((dx, dy), scale, turn) = motion(&first, &now);
+        let ((dx, dy), scale, turn) = motion(&first, &now, 1.0);
         assert!((dx - 0.1).abs() < 1e-9 && dy.abs() < 1e-9, "{dx} {dy}");
         assert!((scale - 2.0).abs() < 1e-9);
+        assert!((turn - 90.0).abs() < 1e-9, "{turn}");
+    }
+
+    #[test]
+    fn a_quarter_turn_on_a_wide_picture_keeps_its_size() {
+        // 16:9: a span 0.1 of the width across is 0.1 * 16/9 of the height long.
+        let aspect = 16.0 / 9.0;
+        let first = Sample { at: 0.0, a: (0.45, 0.5), b: (0.55, 0.5) };
+        let half = 0.05 * aspect;
+        let now = Sample { at: 1.0, a: (0.5, 0.5 - half), b: (0.5, 0.5 + half) };
+        let (_, scale, turn) = motion(&first, &now, aspect);
+        assert!((scale - 1.0).abs() < 1e-9, "{scale}");
         assert!((turn - 90.0).abs() < 1e-9, "{turn}");
     }
 }

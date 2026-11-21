@@ -60,17 +60,26 @@ pub fn track_selected(studio: &mut Studio) {
     let Some(video) = video else {
         return studio.notify(&t("motionTrack.noVideo"), true);
     };
-    let Some(path) = studio
+    let Some((path, aspect)) = studio
         .project()
         .media
         .iter()
         .find(|item| item.id == video.media_id)
-        .map(|item| item.path.clone())
+        .map(|item| {
+            let aspect = match (item.width, item.height) {
+                (Some(width), Some(height)) if height > 0 => f64::from(width) / f64::from(height),
+                _ => 16.0 / 9.0,
+            };
+            (item.path.clone(), aspect)
+        })
     else {
         return;
     };
-    let from = video.source_start + (clip.start - video.start) * video.speed;
-    let length = clip.duration.min(video.start + video.duration - clip.start);
+    // Tracking runs in the media's seconds; the clip's keys in the
+    // timeline's. The video's speed is the rate between the two.
+    let speed = video.speed.max(0.01);
+    let from = video.source_start + (clip.start - video.start) * speed;
+    let length = clip.duration.min(video.start + video.duration - clip.start) * speed;
     let centre = (0.5 + clip.offset_x, 0.5 + clip.offset_y);
     let (a, b) = ((centre.0 - HALF_SPAN, centre.1), (centre.0 + HALF_SPAN, centre.1));
     studio.notify(&t("motionTrack.started"), false);
@@ -79,7 +88,7 @@ pub fn track_selected(studio: &mut Studio) {
         move |studio, _, _, result| match result {
             Ok(samples) if samples.len() > 1 => {
                 let count = samples.len();
-                studio.apply(Command::Batch { commands: keys(&clip, &samples) });
+                studio.apply(Command::Batch { commands: keys(&clip, &samples, aspect, speed) });
                 studio.notify(&tf("motionTrack.done", &[&count]), false);
             }
             Ok(_) => studio.notify(&t("motionTrack.tooShort"), true),
@@ -90,16 +99,27 @@ pub fn track_selected(studio: &mut Studio) {
 
 /// The keys that make `clip` follow `samples`, replacing its own keys for
 /// the four properties.
-fn keys(clip: &concat_project::model::Clip, samples: &[Sample]) -> Vec<Command> {
+fn keys(clip: &concat_project::model::Clip, samples: &[Sample], aspect: f64, speed: f64) -> Vec<Command> {
     let properties = [KeyProperty::OffsetX, KeyProperty::OffsetY, KeyProperty::Scale, KeyProperty::Rotation];
     let mut commands: Vec<Command> = properties
         .iter()
         .map(|&property| Command::ClearClipKeys { clip_id: clip.id.clone(), property })
         .collect();
     let first = &samples[0];
+    let mut last_turn = 0.0_f64;
     for sample in samples {
-        let ((dx, dy), scale, turn) = track::motion(first, sample);
-        let at = (sample.at / clip.duration.max(1e-6)).clamp(0.0, 1.0);
+        let ((dx, dy), scale, turn) = track::motion(first, sample, aspect);
+        // Unwrapped: a thing turning past half a turn keeps turning the
+        // same way, rather than its keys jumping a whole turn back.
+        let mut turn = turn;
+        while turn - last_turn > 180.0 {
+            turn -= 360.0;
+        }
+        while turn - last_turn < -180.0 {
+            turn += 360.0;
+        }
+        last_turn = turn;
+        let at = (sample.at / speed / clip.duration.max(1e-6)).clamp(0.0, 1.0);
         let values = [clip.offset_x + dx, clip.offset_y + dy, clip.scale * scale, clip.rotation + turn];
         for (&property, value) in properties.iter().zip(values) {
             commands.push(Command::SetClipKey {
