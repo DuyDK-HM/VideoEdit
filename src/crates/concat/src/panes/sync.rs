@@ -49,11 +49,22 @@ pub fn pull_latest(studio: &mut Studio) {
         .or_else(|| std::env::var_os("HOME"))
         .map(PathBuf::from)
         .unwrap_or_else(|| PathBuf::from("."));
+    // A pulled project that is open is closed (and saved) first: the open
+    // session would otherwise save its older copy over the one pulled.
+    let pulled_root = home.join("Concat Sync");
+    let open_pulled = studio
+        .session
+        .as_ref()
+        .is_some_and(|session| std::path::Path::new(session.path()).starts_with(&pulled_root));
+    // A failed save says so itself and keeps the project open.
+    if open_pulled && studio.close_project().is_err() {
+        return;
+    }
     studio.notify(&t("sync.pulling"), false);
     spawn_long(
         move || {
             let id = sync::latest(&server)?.ok_or_else(|| t("sync.nothingOnServer"))?;
-            sync::pull(&server, &id, &home.join("Concat Sync").join(&id), &mut |_| {})
+            sync::pull(&server, &id, &pulled_root.join(&id), &mut |_| {})
         },
         |studio, _, _, result| match result {
             Ok(folder) => {

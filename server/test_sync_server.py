@@ -59,7 +59,7 @@ def test_a_project_version_needs_its_media_uploaded_first(client):
     assert client.get("/projects/tap-1?version=9", headers=AUTH).status_code == 404
 
 
-@pytest.mark.parametrize("rel", ["../x.mp4", "/etc/passwd", "C:/x.mp4", "a/../../b"])
+@pytest.mark.parametrize("rel", ["../x.mp4", "/etc/passwd", "C:/x.mp4", "a/../../b", "a\\..\\..\\x.bat"])
 def test_file_paths_outside_the_project_are_refused(client, rel):
     body = {"name": "x", "document": {}, "files": {rel: "0" * 64}}
     assert client.put("/projects/p", json=body, headers=AUTH).status_code == 400

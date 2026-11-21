@@ -127,7 +127,7 @@ def put_project(project_id: str, body: ProjectVersion) -> dict:
     """Saves a new version. Every file it names must already be uploaded, so a version on
     the server is always one another machine can open whole."""
     for rel in body.files:
-        if rel.startswith(("/", "\\")) or ".." in Path(rel).parts or ":" in rel:
+        if rel.startswith("/") or "\\" in rel or ".." in Path(rel).parts or ":" in rel:
             raise HTTPException(400, f"{rel}: file paths must be relative to the project")
     absent = sorted({h for h in body.files.values() if not blob_path(h).is_file()})
     if absent:

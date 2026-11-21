@@ -173,6 +173,21 @@ pub fn latest(server: &Server) -> Result<Option<String>, String> {
     Ok(answer["projects"][0]["id"].as_str().map(str::to_owned))
 }
 
+/// `place` (a path inside a package, `/`-separated) under `into`, or an
+/// error for one that would land anywhere else: `..`, a drive, a root, or
+/// a backslash, which Windows reads as a separator the server does not.
+fn inside(into: &Path, place: &str) -> Result<PathBuf, String> {
+    let refused = place.is_empty()
+        || place.contains('\\')
+        || place.contains(':')
+        || place.starts_with('/')
+        || place.split('/').any(|part| part == ".." || part == ".");
+    if refused {
+        return Err(format!("{place}: not a path inside the project"));
+    }
+    Ok(into.join(place))
+}
+
 /// Pulls project `id`'s latest version into `into` (made if need be; files
 /// already there with the right digest are kept). Returns `into`.
 pub fn pull(server: &Server, id: &str, into: &Path, report: &mut dyn FnMut(&str)) -> Result<PathBuf, String> {
@@ -180,10 +195,7 @@ pub fn pull(server: &Server, id: &str, into: &Path, report: &mut dyn FnMut(&str)
     let files: BTreeMap<String, String> =
         serde_json::from_value(answer["files"].take()).map_err(|error| error.to_string())?;
     for (place, hash) in &files {
-        if place.split('/').any(|part| part == "..") {
-            return Err(format!("{place}: not a path inside the project"));
-        }
-        let target = into.join(place);
+        let target = inside(into, place)?;
         if target.is_file() && digest(&target).is_ok_and(|have| &have == hash) {
             continue;
         }
@@ -197,6 +209,12 @@ pub fn pull(server: &Server, id: &str, into: &Path, report: &mut dyn FnMut(&str)
         std::io::copy(&mut response.into_reader(), &mut out).map_err(|error| error.to_string())?;
         drop(out);
         std::fs::rename(&partial, &target).map_err(|error| format!("{}: {error}", target.display()))?;
+    }
+    // What was here before is kept beside it: a pull over a copy edited
+    // since and not pushed would otherwise lose those edits.
+    let document_path = into.join(DOCUMENT);
+    if document_path.is_file() {
+        let _ = std::fs::copy(&document_path, into.join(format!("{DOCUMENT}.bak")));
     }
     let mut document = answer["document"].take();
     rewrite(&mut document, &mut |text| {
@@ -212,6 +230,15 @@ pub fn pull(server: &Server, id: &str, into: &Path, report: &mut dyn FnMut(&str)
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_pull_never_writes_outside_its_folder() {
+        let into = Path::new("C:/sync/p");
+        assert_eq!(inside(into, "media/a.mp4").unwrap(), into.join("media/a.mp4"));
+        for bad in ["../x", "a/../../x", "a\\..\\x", "\\x", "C:/x", "/etc/x", "", "./x"] {
+            assert!(inside(into, bad).is_err(), "{bad}");
+        }
+    }
 
     #[test]
     fn ids_are_what_the_server_accepts() {
