@@ -43,6 +43,8 @@ pub mod memory;
 pub mod merge;
 pub mod models;
 pub mod net;
+/// Fork: a project and its files packed into one zip.
+pub mod package;
 /// Fork: HEIC/HEIF photos converted to JPEG before import.
 pub mod normalize;
 pub mod playback;

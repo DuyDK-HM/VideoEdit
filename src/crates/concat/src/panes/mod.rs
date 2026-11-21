@@ -25,6 +25,8 @@ pub mod media_bin;
 /// Fork: File > Merge selected files.
 pub mod merge;
 pub mod monitor;
+/// Fork: pack a project into a zip, open one.
+pub mod package;
 pub mod pace;
 pub mod project;
 pub mod relink;

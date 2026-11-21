@@ -75,6 +75,26 @@
     "en": "The files differ, so {0} clips went on the timeline in name order. Export to make one video.",
     "vi": "Các file khác thông số nên {0} clip đã được đặt lên timeline theo thứ tự tên. Bấm Export để ra một video."
   },
+  "package.packMenu": {
+    "en": "Pack project (.zip)",
+    "vi": "Đóng gói project (.zip)"
+  },
+  "package.openMenu": {
+    "en": "Open packed project (.zip)…",
+    "vi": "Mở gói project (.zip)…"
+  },
+  "package.zip": {
+    "en": "Packed project",
+    "vi": "Gói project"
+  },
+  "package.packing": {
+    "en": "Packing the project and its files…",
+    "vi": "Đang đóng gói project cùng các file…"
+  },
+  "package.packed": {
+    "en": "Packed to {0} ({1} files from outside the project folder went in).",
+    "vi": "Đã đóng gói vào {0} (kèm {1} file nằm ngoài thư mục project)."
+  },
   "batchSubs.menu": {
     "en": "Batch subtitles (PhoWhisper)",
     "vi": "Phụ đề hàng loạt (PhoWhisper)"

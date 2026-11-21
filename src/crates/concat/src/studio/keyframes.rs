@@ -2644,6 +2644,8 @@ impl Studio {
                 row("batch-subs", t("batchSubs.menu"), Glyph::Sparkle, "", true),
                 row("batch-subs-translate", t("batchSubs.menuTranslate"), Glyph::Sparkle, "", true),
                 row("batch-subs-stop", t("batchSubs.menuStop"), Glyph::Close, "", true),
+                row("pack", t("package.packMenu"), Glyph::Export, "", true),
+                row("unpack", t("package.openMenu"), Glyph::Import, "", true),
                 row(
                     "clear-cache",
                     t("studio.clearProjectCache"),
