@@ -56,7 +56,7 @@
 - Server chỉ chạy một export mỗi lúc; lần thứ hai trả `Busy`.
 
 ## Build và test
-- Rust 1.93+, FFmpeg 7 shared (BtbN `win64-gpl-shared`, `FFMPEG_DIR`), LLVM (`LIBCLANG_PATH`), cmake, C++.
+- Rust 1.93.1 (ghim), FFmpeg 8.1 shared (BtbN `win64-lgpl-shared`, ghim trong `scripts/ci/deps.lock`, `FFMPEG_DIR`), LLVM (`LIBCLANG_PATH`), cmake, MSVC. Cài hết bằng `setup.bat`.
 - Chạy: `cd src; cargo run -p concat`. Bản release: `cargo build --profile app -p concat`.
 - Test: `cargo test` / `cargo nextest`, clippy `-D warnings`. Crate UI build rất lâu, nên test logic ở crate khác.
 - Repo có sẵn skill `.claude/skills/run-concat/SKILL.md` để chạy app.

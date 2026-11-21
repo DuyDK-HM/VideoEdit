@@ -48,12 +48,13 @@ Mỗi phase xong phải có: `cargo test` của crate bị đụng tới chạy 
 và đã chạy app thử tận tay.
 
 ### Phase 0: Môi trường và nhánh
-- [ ] Build được trên Windows: Rust 1.93+, FFmpeg 7 `win64-gpl-shared` (`FFMPEG_DIR`), LLVM (`LIBCLANG_PATH`), cmake. Chạy `cd src; cargo run -p concat`
-- [ ] Thêm remote upstream: `git remote add upstream https://github.com/jub0t/Concat.git`. Quy trình cập nhật: `git fetch upstream; git merge upstream/main`
+- [x] Build được trên Windows: rustup (toolchain 1.93.1 ghim trong `src/rust-toolchain.toml`), MSVC BuildTools, CMake, LLVM (`LIBCLANG_PATH`), FFmpeg 8.1 `win64-lgpl-shared` (`FFMPEG_DIR`, lấy từ `scripts/ci/deps.lock`)
+- [x] Thêm remote upstream: `git remote add upstream https://github.com/jub0t/Concat.git`. Quy trình cập nhật: `git fetch upstream; git merge upstream/main`
 - [x] Tạo nhánh `vn/main` (D7)
-- [ ] `run.bat` ở thư mục gốc repo. Có exe rồi thì mở luôn. Mã mới hơn exe thì build (`cargo build --profile quick -p concat`) rồi mới mở. Nhớ đưa `%FFMPEG_DIR%\bin` vào PATH vì FFmpeg dùng bản DLL. Thêm `setup.bat` cài Rust, LLVM, FFmpeg cho máy mới
-- [ ] Cấu hình đường dẫn Python sidecar (`AIVoice/.venv/Scripts/python.exe` + thư mục adapter) trong Settings hoặc file cấu hình
-- Xong khi: app chạy được, mở và xuất thử một project.
+- [x] `setup.bat` (→ `scripts/vn/setup.ps1`): cài qua winget những gì thiếu, tải FFmpeg vào `vendor/`, ghi `vendor/env.cmd`. `run.bat`: nạp env, `cargo build --profile quick -p concat` (cargo tự biết có cần build lại không), mở `src/target/quick/concat.exe`
+- [ ] Chuyển sang Phase 3: cấu hình đường dẫn Python sidecar (`AIVoice/.venv/Scripts/python.exe` + thư mục adapter)
+- Máy code (ổ đầy, GPU AMD) chỉ chạy `cargo check`/`test` từng crate. Máy chạy chính (NVIDIA) cài bằng `setup.bat` rồi chạy `run.bat`.
+- Xong khi: app chạy được, mở và xuất thử một project (kiểm tra trên máy chạy chính).
 
 ### Phase 1: Preview 4K mượt
 Nguyên nhân đã tìm ra: `Proxies` mặc định tắt (`src/crates/concat/src/prefs.rs:132`), và proxy chỉ dùng khi preview ở Half/Quarter.
