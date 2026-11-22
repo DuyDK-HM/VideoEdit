@@ -80,4 +80,5 @@ $sidecar
 if exist "%~dp0local.cmd" call "%~dp0local.cmd"
 "@ | Set-Content -Encoding ascii (Join-Path $vendor "env.cmd")
 
-Write-Host "done: vendor\env.cmd written. Start the editor with run.bat."
+& (Join-Path $PSScriptRoot "make-shortcut.ps1")
+Write-Host "done: vendor\env.cmd written. Build with run.bat once, then open VideoEdit from the desktop or Start menu."

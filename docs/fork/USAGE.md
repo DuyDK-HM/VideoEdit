@@ -11,7 +11,7 @@ Mọi tính năng mới nằm trong menu **File** của Concat.
    set "CONCAT_SYNC_TOKEN=<token trong rr:~/concat-sync/token>"
    set "CONCAT_SOUNDS_BASE=http://100.114.205.62:8700/audio"
    ```
-4. Chạy `run.bat`. Nó build nếu mã nguồn đã đổi, rồi mở app.
+4. Chạy `run.bat`. Nó build nếu mã nguồn đã đổi, rồi mở app. Từ lần sau mở bằng shortcut **VideoEdit** trên Desktop/Start menu (`launch.bat`, không build lại). Đừng mở thẳng `concat.exe`: như thế app thiếu env nên không có SFX, phụ đề và sync.
 
 ## Tính năng
 | Menu | Làm gì |
