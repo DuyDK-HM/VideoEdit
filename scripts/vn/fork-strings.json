@@ -182,5 +182,29 @@
   "sync.nothingOnServer": {
     "en": "No project on the server yet.",
     "vi": "Server chưa có project nào."
+  },
+  "sounds.library": {
+    "en": "SFX library",
+    "vi": "Thư viện SFX"
+  },
+  "sounds.libraryAll": {
+    "en": "All",
+    "vi": "Tất cả"
+  },
+  "sounds.libraryLoading": {
+    "en": "Loading the sound list…",
+    "vi": "Đang tải danh sách âm thanh…"
+  },
+  "sounds.librarySoon": {
+    "en": "The server has no sound list yet.",
+    "vi": "Server chưa có danh sách âm thanh."
+  },
+  "sounds.libraryLoad": {
+    "en": "Load sounds",
+    "vi": "Tải danh sách âm thanh"
+  },
+  "sounds.libraryHint": {
+    "en": "Click a sound to hear it, + to add it at the playhead, or drag it onto the timeline.",
+    "vi": "Nhấp vào âm thanh để nghe, nhấn + để thêm tại đầu phát, hoặc kéo lên timeline."
   }
 }

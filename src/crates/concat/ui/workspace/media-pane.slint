@@ -1858,6 +1858,9 @@ export component MediaPane inherits Rectangle {
     property <int> audio-category;
     property <bool> sounds-open: true;
     property <bool> voices-open: true;
+    /// Fork: the SFX library from our own server (CONCAT_SOUNDS_BASE) is
+    /// shelves 20 (all) to 25 (one category each).
+    property <bool> library-open: true;
     /// How far left the page strip can be pushed: nothing, while its chips
     /// fit. See `strip`.
     property <length> strip-floor: Math.min(0px, strip.width - strip.content-width);
@@ -2215,6 +2218,72 @@ export component MediaPane inherits Rectangle {
                             count: Sounds.mine.length;
                             current: root.audio-category == 0;
                             clicked => { root.audio-category = 0; }
+                        }
+                        CategoryHeading {
+                            height: 26px;
+                            title: I18n.t("sounds.library");
+                            open: root.library-open;
+                            toggled => { root.library-open = !root.library-open; }
+                        }
+                        if root.library-open: CategoryRow {
+                            height: 24px;
+                            label: I18n.t("sounds.libraryAll");
+                            current: root.audio-category == 20;
+                            clicked => {
+                                root.audio-category = 20;
+                                Sounds.concat-category-changed(0);
+                                if Sounds.concat-state == 0 || Sounds.concat-state == 4 { Sounds.load-concat(); }
+                            }
+                        }
+                        if root.library-open: CategoryRow {
+                            height: 24px;
+                            label: I18n.t("sounds.catWhoosh");
+                            current: root.audio-category == 21;
+                            clicked => {
+                                root.audio-category = 21;
+                                Sounds.concat-category-changed(1);
+                                if Sounds.concat-state == 0 || Sounds.concat-state == 4 { Sounds.load-concat(); }
+                            }
+                        }
+                        if root.library-open: CategoryRow {
+                            height: 24px;
+                            label: I18n.t("sounds.catImpact");
+                            current: root.audio-category == 22;
+                            clicked => {
+                                root.audio-category = 22;
+                                Sounds.concat-category-changed(2);
+                                if Sounds.concat-state == 0 || Sounds.concat-state == 4 { Sounds.load-concat(); }
+                            }
+                        }
+                        if root.library-open: CategoryRow {
+                            height: 24px;
+                            label: I18n.t("sounds.catRiser");
+                            current: root.audio-category == 23;
+                            clicked => {
+                                root.audio-category = 23;
+                                Sounds.concat-category-changed(3);
+                                if Sounds.concat-state == 0 || Sounds.concat-state == 4 { Sounds.load-concat(); }
+                            }
+                        }
+                        if root.library-open: CategoryRow {
+                            height: 24px;
+                            label: I18n.t("sounds.catAmbience");
+                            current: root.audio-category == 24;
+                            clicked => {
+                                root.audio-category = 24;
+                                Sounds.concat-category-changed(4);
+                                if Sounds.concat-state == 0 || Sounds.concat-state == 4 { Sounds.load-concat(); }
+                            }
+                        }
+                        if root.library-open: CategoryRow {
+                            height: 24px;
+                            label: I18n.t("sounds.catMusic");
+                            current: root.audio-category == 25;
+                            clicked => {
+                                root.audio-category = 25;
+                                Sounds.concat-category-changed(5);
+                                if Sounds.concat-state == 0 || Sounds.concat-state == 4 { Sounds.load-concat(); }
+                            }
                         }
                         CategoryHeading {
                             height: 26px;
@@ -2611,6 +2680,29 @@ export component MediaPane inherits Rectangle {
                     }
                     SoundList {
                         items: Sounds.mine;
+                    }
+                }
+
+                // Fork: the SFX library, narrowed to the category picked.
+                if root.tab == 8 && root.audio-category >= 20: VerticalLayout {
+                    padding: 8px;
+                    spacing: 8px;
+
+                    Text {
+                        text: Sounds.concat-state == 1 ? I18n.t("sounds.libraryLoading")
+                            : Sounds.concat-state == 3 ? I18n.t("sounds.librarySoon")
+                            : Sounds.concat-state == 4 ? I18n.t("sounds.offline")
+                            : I18n.t("sounds.libraryHint");
+                        color: Theme.fg-muted;
+                        font-size: Theme.fs-sm;
+                        wrap: word-wrap;
+                    }
+                    if Sounds.concat-state == 4 || Sounds.concat-state == 0: ImportButton {
+                        label: I18n.t("sounds.libraryLoad");
+                        clicked => { Sounds.load-concat(); }
+                    }
+                    SoundList {
+                        items: Sounds.concat;
                     }
                 }
 
