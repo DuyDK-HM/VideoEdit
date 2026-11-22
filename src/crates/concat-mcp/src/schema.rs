@@ -471,7 +471,9 @@ mod tests {
             .map(|tool| (tool["name"].to_string(), tool.to_string().len()))
             .collect();
         let total: usize = sizes.iter().map(|(_, size)| size).sum();
-        assert!(total < 180_000, "{total}: {sizes:?}");
+        // The fork's seven tools (downloads, merge, transcription,
+        // packages, sync) add about 7 KB.
+        assert!(total < 190_000, "{total}: {sizes:?}");
         for (name, size) in &sizes {
             assert!(*size < 72_000, "{name}: {size}");
         }
