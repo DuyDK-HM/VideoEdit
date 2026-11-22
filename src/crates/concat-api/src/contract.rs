@@ -73,7 +73,14 @@ fn reply_schema(method: &str, generator: &mut SchemaGenerator) -> Option<Value> 
         | "edit.undo"
         | "edit.redo"
         | "media.import"
+        | "media.merge"
+        | "project.unpack"
+        | "sync.pull"
         | "template.instantiate" => of::<EditorView>(generator),
+        "media.download" => of::<crate::fork::Fetched>(generator),
+        "captions.transcribe" => of::<crate::fork::Cues>(generator),
+        "project.pack" => of::<crate::fork::Packed>(generator),
+        "sync.push" => of::<crate::fork::Pushed>(generator),
         "project.close" | "project.save" | "export.cancel" => of::<Done>(generator),
         "project.list" => of::<Vec<ProjectInfo>>(generator),
         "project.document" => json!({

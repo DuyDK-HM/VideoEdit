@@ -255,6 +255,58 @@ pub fn catalogue() -> Vec<Tool> {
         )
         .idempotent(),
         method(
+            "media_download",
+            "Download videos from links",
+            "Downloads every video the `urls` name (TikTok, Douyin, YouTube, a playlist - anything yt-dlp reads) into the project's `downloads` folder and imports each into the bin, as the window's File > Download from link does. Waits until the last one is in, which can take minutes; `files` lists what came in, `errors` what did not. `cookies` is a Netscape cookies.txt for sites that want a login. Place the new items with `clip_add` (their ids are in `timeline_read`'s media).",
+            "media.download",
+            Raw,
+        ),
+        method(
+            "media_merge",
+            "Merge media end to end",
+            "Joins at least two bin items end to end, in natural name order (2.mp4 before 10.mp4): files of one format become one new file in the project's `merged` folder, imported into the bin (its id is the summary's `createdId`); files that differ are laid on the timeline one after another, after what is there.",
+            "media.merge",
+            Summary,
+        ),
+        method(
+            "captions_transcribe",
+            "Transcribe a clip",
+            "Writes subtitles for the sound of the media under video clip `clipId` with PhoWhisper (best on Vietnamese), translated to Vietnamese with `translate: true`, and returns them as `captions` already placed on the timeline where the clip shows them (trim and speed accounted for), plus the `.srt` file written. Changes nothing: hand `captions` to `captions_add` to put them on screen, after editing them if needed. Takes about a minute per minute of speech.",
+            "captions.transcribe",
+            Raw,
+        )
+        .reading(),
+        method(
+            "project_pack",
+            "Pack a project",
+            "Saves an open project and packs it with every file it uses, inside its folder or not, into one .zip beside the folder - one file to move the project to another machine. Replaces a .zip of that name.",
+            "project.pack",
+            Raw,
+        )
+        .destroying(),
+        method(
+            "project_unpack",
+            "Unpack a project",
+            "Unpacks a .zip that `project_pack` wrote into a folder beside it and opens the project inside; the reply is that project's summary, its folder the `path` to use from then on.",
+            "project.unpack",
+            Summary,
+        ),
+        method(
+            "sync_push",
+            "Push to the sync server",
+            "Saves an open project and uploads it with its media to the sync server, so another machine can `sync_pull` it. Only files the server lacks travel. Returns the project's `id` on the server.",
+            "sync.push",
+            Raw,
+        ),
+        method(
+            "sync_pull",
+            "Pull from the sync server",
+            "Downloads the project last pushed to the sync server (or the `id` given) into `Concat Sync` under the user's home and opens it. A copy already there is replaced, its old concat.json kept as concat.json.bak; refused while that copy is open.",
+            "sync.pull",
+            Summary,
+        )
+        .destroying(),
+        method(
             "edit_apply",
             "Apply an edit",
             "Applies any one edit command to an open project, as one undoable step. `command` is an object tagged by `op` - every edit the window can make is one, with the same limits and refusals; the typed tools below are the common ones. `{\"op\": \"batch\", \"commands\": [...]}` applies several commands as one atomic, undoable step: all land or none does, and `createdId` is the last id minted inside. A refusal comes back as the sentence the window would show, with nothing changed. Returns the project summary; a command that creates something puts its id in `createdId`.",
@@ -999,6 +1051,22 @@ mod tests {
                 "media_import",
                 json!({ "path": "/tmp/Cut", "file": "/tmp/a.mp4" }),
             ),
+            (
+                "media_download",
+                json!({ "path": "/tmp/Cut", "urls": ["https://www.tiktok.com/@a/video/1"] }),
+            ),
+            (
+                "media_merge",
+                json!({ "path": "/tmp/Cut", "mediaIds": ["m1", "m2"] }),
+            ),
+            (
+                "captions_transcribe",
+                json!({ "path": "/tmp/Cut", "clipId": "c1", "translate": true }),
+            ),
+            ("project_pack", json!({ "path": "/tmp/Cut" })),
+            ("project_unpack", json!({ "file": "/tmp/Cut.zip" })),
+            ("sync_push", json!({ "path": "/tmp/Cut" })),
+            ("sync_pull", json!({})),
             (
                 "edit_apply",
                 json!({ "path": "/tmp/Cut", "command": { "op": "addTrack" } }),

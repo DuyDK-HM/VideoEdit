@@ -75,7 +75,7 @@ Editor cũ thì tạo proxy H.264 720p ngay khi nhập, trình duyệt giải m�
 - [x] Dịch: đóng gói `dich.py` + `dich_lo_json.py` + `de_xuat_dich.py` thành CLI Python (vào .srt → ra .srt), giữ phần kiểm tra chất lượng bản dịch tiếng Việt. Ollama/Gemini quản lý bằng `ollama_manager.py`, `gemini_proxy.py`
 - [x] Phía Concat: một module sidecar chung (chạy tiến trình con, đọc JSON từng dòng, huỷ được, có hàng đợi GPU một việc một lúc), bắt chước mẫu `concat-host/src/tts.rs`
 - [x] Hộp thoại hàng loạt: chọn nhiều media/clip → phụ đề → (tuỳ chọn) dịch → đặt lên lane caption bằng `concat_project::srt` (làm thành menu File › Phụ đề hàng loạt, không phải hộp thoại; chạy cho clip đang chọn hoặc tất cả)
-- [ ] Thêm variant `Request` trong `concat-api/src/message.rs` để MCP/CLI dùng được (chưa làm: chưa thấy cần cho MCP/CLI)
+- [x] Thêm variant `Request` trong `concat-api/src/message.rs` để MCP/CLI dùng được: `media.download`, `media.merge`, `captions.transcribe`, `project.pack`, `project.unpack`, `sync.push`, `sync.pull` (ở `concat-api/src/fork.rs`), cùng các tool MCP tương ứng; `mcp.bat` nạp env
 - Xong khi: 10 video chạy một lượt ra phụ đề tiếng Việt đã dịch trên timeline, huỷ giữa chừng không treo.
 
 ### Phase 4: Ghép hàng loạt

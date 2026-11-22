@@ -30,6 +30,7 @@
 
 #[cfg(feature = "schema")]
 mod contract;
+pub mod fork;
 mod job;
 pub mod message;
 #[cfg(test)]
@@ -470,7 +471,10 @@ impl Api {
             Request::MediaProbe { path } => {
                 Ok(Reply::Media(media::probe(&path).map_err(ApiError::failed)?))
             }
-            Request::MediaImport { path, file } => view(self.import(&path, &file)?),
+            Request::MediaImport { path, file } => {
+                let file = self.importable(&path, &file)?;
+                view(self.import(&path, &file)?)
+            }
             Request::CatalogueList { kind } => Ok(Reply::Packages(catalogue(kind.as_deref())?)),
             Request::TemplateList => Ok(Reply::Templates(templates::list(&self.dirs.config))),
             Request::TemplateInstantiate {
@@ -501,6 +505,21 @@ impl Api {
                     None => Ok(Reply::Picture(self.picture(&path, time, size)?)),
                 }
             }
+            Request::MediaDownload {
+                path,
+                urls,
+                cookies,
+            } => Ok(Reply::Fetched(self.download(&path, &urls, cookies.as_deref())?)),
+            Request::MediaMerge { path, media_ids } => view(self.merge(&path, &media_ids)?),
+            Request::CaptionsTranscribe {
+                path,
+                clip_id,
+                translate,
+            } => Ok(Reply::Cues(self.transcribe(&path, &clip_id, translate)?)),
+            Request::ProjectPack { path } => Ok(Reply::Packed(self.pack(&path)?)),
+            Request::ProjectUnpack { file } => view(self.unpack(&file)?),
+            Request::SyncPush { path } => Ok(Reply::Pushed(self.push(&path)?)),
+            Request::SyncPull { id } => view(self.pull(id.as_deref())?),
         }
     }
 

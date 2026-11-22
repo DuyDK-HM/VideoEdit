@@ -65,6 +65,7 @@ Tools are named for what they do, and their argument schemas are generated from 
 | Templates | `template_list`, `template_instantiate` |
 | Export | `export_start`, `export_status`, `export_wait` (with progress), `export_cancel` |
 | Looking | `preview_frame` (the composited frame as an image) |
+| Fork (this branch) | `media_download` (yt-dlp links into the bin), `media_merge`, `captions_transcribe` (PhoWhisper, optional translation; feed the result to `captions_add`), `project_pack`, `project_unpack`, `sync_push`, `sync_pull` |
 
 Edits stay in memory until `project_save`, as in the window. Times are seconds; a keyframe's position is a fraction of its clip (0 to 1); sizes and offsets are fractions of the frame.
 

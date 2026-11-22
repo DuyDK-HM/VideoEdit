@@ -244,6 +244,82 @@ pub enum Request {
         #[serde(default)]
         height: Option<u32>,
     },
+
+    /// Downloads every video the links name (TikTok, Douyin, YouTube,
+    /// anything yt-dlp reads) into the project's `downloads` folder and
+    /// imports each one, as the window's File > Download from link does.
+    /// Waits until the last one is in; an item that fails is listed in the
+    /// reply's `errors` and the rest still come.
+    #[serde(rename = "media.download")]
+    MediaDownload {
+        /// The project folder.
+        path: String,
+        /// The links, one video or playlist each.
+        urls: Vec<String>,
+        /// A Netscape `cookies.txt` for sites that want a login; the
+        /// cookies of anti-bot walls are left out of it.
+        #[serde(default)]
+        cookies: Option<String>,
+    },
+    /// Joins media of the bin end to end, in natural name order
+    /// (`2.mp4` before `10.mp4`), as the window's File > Merge selected
+    /// does: files of one format are copied losslessly into a new file in
+    /// the project's `merged` folder and imported; files that differ are
+    /// laid on the timeline one after another instead, after what is there.
+    #[serde(rename = "media.merge")]
+    MediaMerge {
+        /// The project folder.
+        path: String,
+        /// The bin items to join, at least two.
+        media_ids: Vec<String>,
+    },
+    /// Writes subtitles for the media under a video clip with PhoWhisper
+    /// (Vietnamese; other languages detected), optionally translated to
+    /// Vietnamese, and hands back the cues placed on the timeline where
+    /// that clip shows them - trim and speed accounted for - without
+    /// changing the project. Needs the old project's sidecar (setup.bat).
+    /// Takes about a minute per minute of speech.
+    #[serde(rename = "captions.transcribe")]
+    CaptionsTranscribe {
+        /// The project folder.
+        path: String,
+        /// The video clip whose sound is transcribed.
+        clip_id: String,
+        /// Translate the subtitles to Vietnamese.
+        #[serde(default)]
+        translate: bool,
+    },
+    /// Saves an open project and packs it, with every file it uses, into
+    /// one `.zip` beside its folder that opens on another machine.
+    #[serde(rename = "project.pack")]
+    ProjectPack {
+        /// The project folder.
+        path: String,
+    },
+    /// Unpacks a `.zip` that `project.pack` wrote into a folder beside it
+    /// and opens the project in it.
+    #[serde(rename = "project.unpack")]
+    ProjectUnpack {
+        /// The `.zip`.
+        file: String,
+    },
+    /// Saves an open project and uploads it, with its media, to the sync
+    /// server (`CONCAT_SYNC_URL`); only files the server lacks travel.
+    #[serde(rename = "sync.push")]
+    SyncPush {
+        /// The project folder.
+        path: String,
+    },
+    /// Downloads the project last pushed to the sync server (or the one
+    /// named) into `Concat Sync` under the user's home, and opens it. A
+    /// project already there is replaced, its old `concat.json` kept as
+    /// `concat.json.bak`; one open is refused.
+    #[serde(rename = "sync.pull")]
+    SyncPull {
+        /// The project id `sync.push` named; the latest pushed when absent.
+        #[serde(default)]
+        id: Option<String>,
+    },
 }
 
 /// One template slot and the file that takes it.
@@ -334,6 +410,14 @@ pub enum Reply {
     Written(Written),
     /// [`Request::PreviewFrame`] without one: the picture itself.
     Picture(Picture),
+    /// [`Request::MediaDownload`].
+    Fetched(crate::fork::Fetched),
+    /// [`Request::CaptionsTranscribe`].
+    Cues(crate::fork::Cues),
+    /// [`Request::ProjectPack`].
+    Packed(crate::fork::Packed),
+    /// [`Request::SyncPush`].
+    Pushed(crate::fork::Pushed),
     /// Methods with nothing to say beyond having worked.
     Done(Done),
 }

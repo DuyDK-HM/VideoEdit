@@ -30,6 +30,13 @@ Mọi tính năng mới nằm trong menu **File** của Concat.
 | Scopes | Mở hiệu ứng có bánh xe màu trong inspector. Bên dưới bánh xe là waveform, vectorscope và histogram của frame đang dừng |
 | Thư viện SFX | Có `CONCAT_SOUNDS_BASE` thì trang Audio sẽ lấy 1263 âm thanh CC0 từ `rr` |
 
+## Dùng qua AI agent (MCP)
+- Build bằng `run.bat` một lần, rồi đăng ký: `claude mcp add concat -- F:\programfiles\VideoEdit\mcp.bat`. `mcp.bat` nạp `vendor\env.cmd`, nên agent có đủ FFmpeg, yt-dlp, sidecar và token sync.
+- Ngoài các tool gốc (xem `docs/MCP.md`), có thêm tool cho từng tính năng của fork: `media_download`, `media_merge`, `captions_transcribe` (trả về phụ đề đã đặt đúng chỗ clip; agent gọi tiếp `captions_add` để đưa lên timeline), `project_pack`, `project_unpack`, `sync_push`, `sync_pull`.
+- Các tool này chạy xong mới trả kết quả. Tải video hoặc làm phụ đề có thể mất vài phút.
+- Khi app đang mở và bật Settings > Automation, agent làm việc qua app. Project đang mở trên màn hình thì agent không mở được, giống bản gốc.
+- Bám theo vật và scopes chưa có tool, vì chúng cần chọn trên màn hình.
+
 ## Server `rr`
 - Deploy hoặc cập nhật: `powershell -ExecutionPolicy Bypass -File server\deploy.ps1`. Thêm `-Sounds <thư mục thu_vien_am>` để dựng lại thư viện âm thanh.
 - Server chạy dạng user service `concat-sync`, chỉ nghe trên IP Tailscale, cổng 8700.
