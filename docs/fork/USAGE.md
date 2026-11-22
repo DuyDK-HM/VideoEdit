@@ -12,6 +12,7 @@ Mọi tính năng mới nằm trong menu **File** của Concat.
    set "CONCAT_SOUNDS_BASE=http://100.114.205.62:8700/audio"
    ```
 4. Chạy `run.bat`. Nó build nếu mã nguồn đã đổi, rồi mở app. Từ lần sau mở bằng shortcut **VideoEdit** trên Desktop/Start menu (`launch.bat`, không build lại). Đừng mở thẳng `concat.exe`: như thế app thiếu env nên không có SFX, phụ đề và sync.
+5. Để dùng hằng ngày, chạy `build-release.bat` (bản tối ưu, build lâu). Shortcut sẽ ưu tiên mở bản này. Bản của `run.bat` để code UI ở `opt-level 0` cho build nhanh, nên dùng sẽ lag. Trước khi build phải đóng VideoEdit và agent đang dùng MCP, vì chúng giữ file `concat.exe`.
 
 ## Tính năng
 | Menu | Làm gì |
