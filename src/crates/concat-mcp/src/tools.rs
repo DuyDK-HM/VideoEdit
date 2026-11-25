@@ -271,7 +271,7 @@ pub fn catalogue() -> Vec<Tool> {
         method(
             "captions_transcribe",
             "Transcribe a clip",
-            "Writes subtitles for the sound of the media under video clip `clipId` with PhoWhisper (best on Vietnamese), translated to Vietnamese with `translate: true`, and returns them as `captions` already placed on the timeline where the clip shows them (trim and speed accounted for), plus the `.srt` file written. Changes nothing: hand `captions` to `captions_add` to put them on screen, after editing them if needed. Takes about a minute per minute of speech.",
+            "Writes subtitles for the sound of the media under video clip `clipId` with Whisper, translated to Vietnamese with `translate: true`, and returns them as `captions` already placed on the timeline where the clip shows them (trim and speed accounted for), plus the `.srt` file written. Changes nothing: hand `captions` to `captions_add` to put them on screen, after editing them if needed. Give `language` (\"Vietnamese\", \"English\" or \"Chinese\") when it is known: left out, Whisper guesses, and music under the speech can make it guess wrong. Takes about a minute per minute of speech.",
             "captions.transcribe",
             Raw,
         )

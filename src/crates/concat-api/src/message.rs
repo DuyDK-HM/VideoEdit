@@ -273,8 +273,8 @@ pub enum Request {
         /// The bin items to join, at least two.
         media_ids: Vec<String>,
     },
-    /// Writes subtitles for the media under a video clip with PhoWhisper
-    /// (Vietnamese; other languages detected), optionally translated to
+    /// Writes subtitles for the media under a video clip with Whisper
+    /// (in `language`, or the one it detects), optionally translated to
     /// Vietnamese, and hands back the cues placed on the timeline where
     /// that clip shows them - trim and speed accounted for - without
     /// changing the project. Needs the old project's sidecar (setup.bat).
@@ -288,6 +288,11 @@ pub enum Request {
         /// Translate the subtitles to Vietnamese.
         #[serde(default)]
         translate: bool,
+        /// The spoken language: "Vietnamese", "English" or "Chinese".
+        /// Absent lets Whisper detect it, which music under the speech
+        /// can fool into another language altogether.
+        #[serde(default)]
+        language: Option<String>,
     },
     /// Saves an open project and packs it, with every file it uses, into
     /// one `.zip` beside its folder that opens on another machine.

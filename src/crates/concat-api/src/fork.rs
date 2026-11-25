@@ -167,7 +167,13 @@ impl Api {
     }
 
     /// [`crate::Request::CaptionsTranscribe`].
-    pub fn transcribe(&mut self, path: &str, clip_id: &str, translate: bool) -> Result<Cues, ApiError> {
+    pub fn transcribe(
+        &mut self,
+        path: &str,
+        clip_id: &str,
+        translate: bool,
+        language: Option<&str>,
+    ) -> Result<Cues, ApiError> {
         let session = self.session(path)?;
         let project = session.project();
         let clip = project
@@ -185,22 +191,23 @@ impl Api {
         let bridge = Bridge::from_env().map_err(ApiError::failed)?;
         let out_dir = Path::new(session.path()).join("subtitles").join(&item.id);
         let mut quiet = |_: Option<f32>, _: &str| {};
-        let mut srt_file = sidecar::run(
-            &bridge,
-            &["subtitle".as_ref(), "--video".as_ref(), media.as_os_str(), "--out-dir".as_ref(), out_dir.as_os_str()],
-            &NEVER,
-            &mut quiet,
-        )
-        .map_err(ApiError::failed)?;
+        // Both steps hear the same language; absent, each keeps the bridge's default.
+        let language: Vec<&std::ffi::OsStr> =
+            language.map_or(Vec::new(), |name| vec!["--source-lang".as_ref(), name.as_ref()]);
+        let subtitle: Vec<&std::ffi::OsStr> =
+            ["subtitle".as_ref(), "--video".as_ref(), media.as_os_str(), "--out-dir".as_ref(), out_dir.as_os_str()]
+                .into_iter()
+                .chain(language.iter().copied())
+                .collect();
+        let mut srt_file = sidecar::run(&bridge, &subtitle, &NEVER, &mut quiet).map_err(ApiError::failed)?;
         if translate {
             let translated = out_dir.join("translated.srt");
-            srt_file = sidecar::run(
-                &bridge,
-                &["translate".as_ref(), "--srt".as_ref(), srt_file.as_os_str(), "--out".as_ref(), translated.as_os_str()],
-                &NEVER,
-                &mut quiet,
-            )
-            .map_err(ApiError::failed)?;
+            let args: Vec<&std::ffi::OsStr> =
+                ["translate".as_ref(), "--srt".as_ref(), srt_file.as_os_str(), "--out".as_ref(), translated.as_os_str()]
+                    .into_iter()
+                    .chain(language.iter().copied())
+                    .collect();
+            srt_file = sidecar::run(&bridge, &args, &NEVER, &mut quiet).map_err(ApiError::failed)?;
         }
         let text = std::fs::read(&srt_file)
             .map(|bytes| String::from_utf8_lossy(&bytes).into_owned())
@@ -325,7 +332,7 @@ mod tests {
         assert_eq!(code(api.dispatch(Request::MediaMerge { path: path.clone(), media_ids: unknown })), ErrorCode::NotFound);
         let none = Request::MediaDownload { path: path.clone(), urls: Vec::new(), cookies: None };
         assert_eq!(code(api.dispatch(none)), ErrorCode::Invalid);
-        let clip = Request::CaptionsTranscribe { path, clip_id: "nope".to_owned(), translate: false };
+        let clip = Request::CaptionsTranscribe { path, clip_id: "nope".to_owned(), translate: false, language: None };
         assert_eq!(code(api.dispatch(clip)), ErrorCode::NotFound);
     }
 
