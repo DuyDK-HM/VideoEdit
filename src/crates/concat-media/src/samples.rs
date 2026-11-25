@@ -1092,6 +1092,52 @@ mod probe {
     use super::*;
     use std::time::Instant;
 
+    /// A sped-up clip's sound, decoded as the mix decodes it - cut, stretched
+    /// at the stretch rate, then through the filters - must leave the process
+    /// heap whole after every frame. `CONCAT_STRETCH_PROBE` names the file;
+    /// Windows only, where `HeapValidate` can walk the heap.
+    #[cfg(windows)]
+    #[test]
+    #[ignore = "a probe"]
+    fn stretched_decoding_leaves_the_heap_whole() {
+        #[link(name = "kernel32")]
+        unsafe extern "system" {
+            fn GetProcessHeap() -> *mut std::ffi::c_void;
+            fn HeapValidate(heap: *mut std::ffi::c_void, flags: u32, block: *const std::ffi::c_void) -> i32;
+        }
+        // SAFETY: both read the process heap and change nothing.
+        let heap_whole = || unsafe { HeapValidate(GetProcessHeap(), 0, std::ptr::null()) != 0 };
+        let Ok(path) = std::env::var("CONCAT_STRETCH_PROBE") else {
+            return;
+        };
+        for speed in [1.6, 0.5, 2.0] {
+            let length = 1.375;
+            let options = AudioOptions {
+                start: Some(0.0),
+                duration: Some(length * speed),
+                filters: Vec::new(),
+                rate: 48_000,
+                channels: 2,
+                format: SampleFormat::F32,
+                stream: None,
+                stretch: Some(Stretching {
+                    map: Arc::new(move |at: f64| at.max(0.0) * speed),
+                    length,
+                }),
+            };
+            assert!(heap_whole(), "{speed}x: the heap was broken before the decoder opened");
+            let mut decoder = AudioDecoder::open(&path, &options).expect("opens");
+            let mut frames = 0;
+            while let Some(_frame) = decoder.next_frame().expect("decodes") {
+                frames += 1;
+                assert!(heap_whole(), "{speed}x: the heap broke at frame {frames}");
+            }
+            drop(decoder);
+            assert!(heap_whole(), "{speed}x: the heap broke when the decoder was dropped");
+            eprintln!("{speed}x: {frames} frames, heap whole");
+        }
+    }
+
     fn first_sample(path: &str, at: f64, old_seek: bool) -> std::time::Duration {
         let started = Instant::now();
         let options = AudioOptions {

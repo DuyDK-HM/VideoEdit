@@ -302,3 +302,54 @@ fn a_held_chord_stays_clean_at_every_speed() {
         );
     }
 }
+
+/// Stereo, as the app always stretches, at the speeds a clip is set to,
+/// read in the decoder's 1024-frame blocks with an out-point: the process
+/// heap must still be whole after every block. Windows only, where
+/// `HeapValidate` can walk it.
+#[cfg(windows)]
+#[test]
+fn stereo_stretching_leaves_the_heap_whole() {
+    #[link(name = "kernel32")]
+    unsafe extern "system" {
+        fn GetProcessHeap() -> *mut c_void;
+        fn HeapValidate(heap: *mut c_void, flags: u32, block: *const c_void) -> i32;
+    }
+    // SAFETY: both read the process heap and change nothing.
+    let heap_whole = || unsafe { HeapValidate(GetProcessHeap(), 0, std::ptr::null()) != 0 };
+    assert!(heap_whole(), "the heap was broken before the test");
+    for speed in [0.5, 1.25, 1.6, 2.0, 3.0] {
+        let seconds = 2.3;
+        let length = (seconds * f64::from(RATE)) as usize;
+        let mono = pips(seconds);
+        let mut stereo = Vec::with_capacity(length * 2);
+        for sample in &mono {
+            stereo.extend_from_slice(&[*sample, -*sample]);
+        }
+        let mut at = 0;
+        let source = move |into: &mut Vec<f32>| {
+            if at >= stereo.len() {
+                return false;
+            }
+            let end = (at + 2048).min(stereo.len());
+            into.extend_from_slice(&stereo[at..end]);
+            at = end;
+            true
+        };
+        let limit = Some(length as u64);
+        let mut stretch = Stretch::new(RATE, 2, Constant(speed), source, limit);
+        let total = (seconds / speed * f64::from(RATE)).round() as usize;
+        let mut sent = 0;
+        let mut block = 0;
+        while sent < total {
+            let frames = 1024.min(total - sent);
+            let mut out = vec![0.0f32; frames * 2];
+            stretch.render(&mut out);
+            sent += frames;
+            assert!(heap_whole(), "{speed}x: the heap broke in block {block}");
+            block += 1;
+        }
+        drop(stretch);
+        assert!(heap_whole(), "{speed}x: the heap broke when the stretcher was dropped");
+    }
+}
