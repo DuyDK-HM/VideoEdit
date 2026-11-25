@@ -976,6 +976,7 @@
   "studio.upgradedEffects": "برخی افکت‌های این پروژه به‌صورت افکت‌های جایگزینشان باز می‌شوند: {0}. برای نگه‌داشتن این تغییر ذخیره کنید.",
   "studio.voiceFailed": "جداسازی صدا ممکن نشد: {0}",
   "sync.nothingOnServer": "No project on the server yet.",
+  "sync.pullHome": "Pull from server",
   "sync.pullMenu": "Pull latest project from server",
   "sync.pulling": "Pulling the latest project…",
   "sync.pushMenu": "Push project to server",

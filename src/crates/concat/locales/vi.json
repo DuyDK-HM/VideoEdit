@@ -976,6 +976,7 @@
   "studio.upgradedEffects": "Một số hiệu ứng trong dự án này mở ra dưới dạng các hiệu ứng thay thế chúng: {0}. Hãy lưu để giữ thay đổi.",
   "studio.voiceFailed": "Không tách được giọng: {0}",
   "sync.nothingOnServer": "Server chưa có project nào.",
+  "sync.pullHome": "Kéo từ server",
   "sync.pullMenu": "Kéo project mới nhất từ server",
   "sync.pulling": "Đang kéo project mới nhất…",
   "sync.pushMenu": "Đẩy project lên server",

@@ -5,6 +5,9 @@ rem trying a change (run.bat). Close VideoEdit and any agent using its MCP first
 setlocal
 cd /d "%~dp0"
 call vendor\env.cmd
+rem The build's id in the log is its commit: a new one tries the GPU again
+rem after a launch that died starting (concat_host::machine::build).
+for /f %%i in ('git rev-parse HEAD 2^>nul') do set "GITHUB_SHA=%%i"
 pushd src
 cargo build --release -p concat --bin concat
 set "RESULT=%errorlevel%"

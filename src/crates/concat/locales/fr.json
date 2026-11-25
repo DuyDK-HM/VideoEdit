@@ -976,6 +976,7 @@
   "studio.upgradedEffects": "Certains effets de ce projet s'ouvrent sous la forme de ceux qui les remplacent : {0}. Enregistrez pour conserver le changement.",
   "studio.voiceFailed": "Impossible d’isoler la voix : {0}",
   "sync.nothingOnServer": "No project on the server yet.",
+  "sync.pullHome": "Pull from server",
   "sync.pullMenu": "Pull latest project from server",
   "sync.pulling": "Pulling the latest project…",
   "sync.pushMenu": "Push project to server",

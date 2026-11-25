@@ -976,6 +976,7 @@
   "studio.upgradedEffects": "このプロジェクトの一部のエフェクトは、後継のエフェクトとして開かれます : {0}。変更を残すには保存してください。",
   "studio.voiceFailed": "声を分離できませんでした: {0}",
   "sync.nothingOnServer": "No project on the server yet.",
+  "sync.pullHome": "Pull from server",
   "sync.pullMenu": "Pull latest project from server",
   "sync.pulling": "Pulling the latest project…",
   "sync.pushMenu": "Push project to server",

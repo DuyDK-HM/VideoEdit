@@ -976,6 +976,7 @@
   "studio.upgradedEffects": "এই প্রজেক্টের কিছু ইফেক্ট সেগুলোর জায়গায় আসা ইফেক্ট হিসেবে খোলে: {0}। পরিবর্তন রাখতে সেভ করুন।",
   "studio.voiceFailed": "কণ্ঠ আলাদা করা যায়নি: {0}",
   "sync.nothingOnServer": "No project on the server yet.",
+  "sync.pullHome": "Pull from server",
   "sync.pullMenu": "Pull latest project from server",
   "sync.pulling": "Pulling the latest project…",
   "sync.pushMenu": "Push project to server",

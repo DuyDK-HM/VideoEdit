@@ -167,6 +167,10 @@
     "en": "Pull latest project from server",
     "vi": "Kéo project mới nhất từ server"
   },
+  "sync.pullHome": {
+    "en": "Pull from server",
+    "vi": "Kéo từ server"
+  },
   "sync.pushing": {
     "en": "Pushing the project and the files the server lacks…",
     "vi": "Đang đẩy project cùng những file server chưa có…"

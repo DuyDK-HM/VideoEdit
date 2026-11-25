@@ -976,6 +976,7 @@
   "studio.upgradedEffects": "تُفتح بعض التأثيرات في هذا المشروع على أنها التأثيرات التي حلّت محلها: {0}. احفظ للإبقاء على التغيير.",
   "studio.voiceFailed": "تعذّر عزل الصوت: {0}",
   "sync.nothingOnServer": "No project on the server yet.",
+  "sync.pullHome": "Pull from server",
   "sync.pullMenu": "Pull latest project from server",
   "sync.pulling": "Pulling the latest project…",
   "sync.pushMenu": "Push project to server",

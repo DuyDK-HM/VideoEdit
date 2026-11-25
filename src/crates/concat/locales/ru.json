@@ -976,6 +976,7 @@
   "studio.upgradedEffects": "Некоторые эффекты проекта открываются как заменившие их: {0}. Сохраните проект, чтобы оставить изменение.",
   "studio.voiceFailed": "Не удалось выделить голос: {0}",
   "sync.nothingOnServer": "No project on the server yet.",
+  "sync.pullHome": "Pull from server",
   "sync.pullMenu": "Pull latest project from server",
   "sync.pulling": "Pulling the latest project…",
   "sync.pushMenu": "Push project to server",

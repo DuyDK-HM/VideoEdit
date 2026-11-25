@@ -976,6 +976,7 @@
   "studio.upgradedEffects": "इस प्रोजेक्ट के कुछ इफ़ेक्ट उन इफ़ेक्ट के रूप में खुलते हैं जो उनकी जगह आए हैं: {0}। बदलाव रखने के लिए सेव करें।",
   "studio.voiceFailed": "आवाज़ अलग नहीं हो सकी: {0}",
   "sync.nothingOnServer": "No project on the server yet.",
+  "sync.pullHome": "Pull from server",
   "sync.pullMenu": "Pull latest project from server",
   "sync.pulling": "Pulling the latest project…",
   "sync.pushMenu": "Push project to server",

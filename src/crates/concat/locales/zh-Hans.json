@@ -976,6 +976,7 @@
   "studio.upgradedEffects": "此项目中的部分效果会以取代它们的效果打开：{0}。保存即可保留此更改。",
   "studio.voiceFailed": "无法分离人声：{0}",
   "sync.nothingOnServer": "No project on the server yet.",
+  "sync.pullHome": "Pull from server",
   "sync.pullMenu": "Pull latest project from server",
   "sync.pulling": "Pulling the latest project…",
   "sync.pushMenu": "Push project to server",

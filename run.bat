@@ -12,6 +12,8 @@ if errorlevel 1 (
   if not exist "%EXE%" ( echo cargo not found and no built editor at %EXE%. & pause & exit /b 1 )
   echo cargo not found, opening the last build.
 ) else (
+  rem The build's id is its commit; see build-release.bat.
+  for /f %%i in ('git rev-parse HEAD 2^>nul') do set "GITHUB_SHA=%%i"
   pushd src
   cargo build --profile quick -p concat --bin concat
   if errorlevel 1 ( popd & echo build failed & pause & exit /b 1 )

@@ -976,6 +976,7 @@
   "studio.upgradedEffects": "اس پروجیکٹ کے کچھ ایفیکٹس اپنی جگہ لینے والے ایفیکٹس کے طور پر کھلتے ہیں: {0}۔ تبدیلی برقرار رکھنے کے لیے محفوظ کریں۔",
   "studio.voiceFailed": "آواز الگ نہیں ہو سکی: {0}",
   "sync.nothingOnServer": "No project on the server yet.",
+  "sync.pullHome": "Pull from server",
   "sync.pullMenu": "Pull latest project from server",
   "sync.pulling": "Pulling the latest project…",
   "sync.pushMenu": "Push project to server",
