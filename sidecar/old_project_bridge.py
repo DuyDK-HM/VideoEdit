@@ -2,7 +2,7 @@
 
 Run with the old project's Python (OLD/AIVoice/.venv/Scripts/python.exe):
 
-    python old_project_bridge.py subtitle  --old-root OLD --video V --out-dir D [--source-lang Chinese] [--clean-audio]
+    python old_project_bridge.py subtitle  --old-root OLD --video V --out-dir D [--source-lang auto] [--clean-audio]
     python old_project_bridge.py translate --old-root OLD --srt IN --out OUT [--source-lang Chinese] [--target-lang Vietnamese]
 
 Every line on stdout is one JSON object:
@@ -176,9 +176,12 @@ def main(argv=None) -> int:
     tr.add_argument("--srt", required=True)
     tr.add_argument("--out", required=True)
     tr.add_argument("--target-lang", default="Vietnamese")
+    # Whisper is only told the language for English and Chinese; anything else
+    # ("auto") lets it detect, so Vietnamese speech is not forced into Chinese.
+    sub.add_argument("--source-lang", default="auto")
+    tr.add_argument("--source-lang", default="Chinese")
     for each in (sub, tr):
         each.add_argument("--old-root", required=True)
-        each.add_argument("--source-lang", default="Chinese")
     args = parser.parse_args(argv)
     sys.path.insert(0, os.path.abspath(args.old_root))
     os.chdir(os.path.abspath(args.old_root))
