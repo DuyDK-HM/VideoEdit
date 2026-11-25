@@ -105,6 +105,22 @@ def subtitle(args) -> int:
     return 0
 
 
+def unload_ollama(model: str, base_url: str) -> None:
+    """Drops the model from VRAM now rather than after Ollama's 5-minute keep-alive:
+    held there, its ~3 GB leaves too little of a 6 GB card for a 4K render."""
+    import urllib.request
+    url = (base_url or "http://127.0.0.1:11434").rstrip("/")
+    if url.endswith("/v1"):
+        url = url[:-3]
+    body = json.dumps({"model": model, "keep_alive": 0}).encode()
+    request = urllib.request.Request(url + "/api/generate", data=body,
+                                     headers={"Content-Type": "application/json"})
+    try:
+        urllib.request.urlopen(request, timeout=10).read()
+    except Exception as error:  # unloading is best effort; the translation already succeeded
+        emit("warning", message=f"could not unload {model} from the GPU: {error}")
+
+
 def translate(args) -> int:
     from orchestrator.config import load_global_config
     from orchestrator.editor import dich, srt
@@ -116,22 +132,29 @@ def translate(args) -> int:
     options = {"source_lang": args.source_lang, "target_lang": args.target_lang,
                "cau": [dict(c, text_goc=c["text"]) for c in sentences], "ids": []}
 
+    tr = load_global_config().get("translate") or {}
+    model = tr.get("mt_model") or "hy-mt2:1.8b"
+    started = []
+
     def start_ollama():
         from orchestrator import ollama_manager
-        tr = load_global_config().get("translate") or {}
-        model = tr.get("mt_model") or "hy-mt2:1.8b"
         result = ollama_manager.ensure_ready(
             model, tr.get("ollama_base_url") or "", autostart=bool(tr.get("autostart_ollama", True)),
             progress_cb=lambda msg, pct=-1, *_: emit("progress", percent=pct if pct and pct >= 0 else None,
                                                     message=msg))
         if not result.get("ok"):
             raise RuntimeError(result.get("reason") or "Ollama is not running")
+        started.append(True)
 
-    if dich.chon_engine(options, load_global_config().get("translate") or {}) not in dich.ENGINE_GEMINI:
-        start_ollama()
-    # The glossary (thuat_ngu.json) is read from the folder the .srt is in.
-    result = dich.dich(Context(), os.path.dirname(os.path.abspath(args.srt)), "dich", {"id": "srt"},
-                       options, dam_bao_ollama=start_ollama)
+    try:
+        if dich.chon_engine(options, tr) not in dich.ENGINE_GEMINI:
+            start_ollama()
+        # The glossary (thuat_ngu.json) is read from the folder the .srt is in.
+        result = dich.dich(Context(), os.path.dirname(os.path.abspath(args.srt)), "dich", {"id": "srt"},
+                           options, dam_bao_ollama=start_ollama)
+    finally:
+        if started:
+            unload_ollama(model, tr.get("ollama_base_url") or "")
     for warning in result.get("canh_bao") or []:
         emit("warning", message=warning)
     translated = [dict(c, text=c.get("text", "")) for c in result["cau"]]
