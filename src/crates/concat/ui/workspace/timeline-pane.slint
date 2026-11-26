@@ -118,6 +118,7 @@ export component TimelinePane inherits Rectangle {
     in property <length> menu-height;
     in property <int> menu-token;
     callback clip-context(id: string);
+    callback track-context(seconds: float, y: length);
     callback menu-selected(id: string);
 
     callback band-selected(from-seconds: float, to-seconds: float,
@@ -468,6 +469,7 @@ export component TimelinePane inherits Rectangle {
                 menu-height: root.menu-height;
                 menu-token: root.menu-token;
                 clip-context(id) => { root.clip-context(id); }
+                track-context(seconds, y) => { root.track-context(seconds, y); }
                 menu-selected(id) => { root.menu-selected(id); }
                 band-selected(a, b, c, d, additive) => {
                     root.band-selected(a, b, c, d, additive);

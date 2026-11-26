@@ -1402,6 +1402,7 @@ export component Lanes inherits Rectangle {
     /// where it opens is decided here, because only this side knows where the
     /// pointer was.
     callback clip-context(id: string);
+    callback track-context(seconds: float, y: length);
     callback menu-selected(id: string);
 
     in property <[MenuItemData]> menu-items;
@@ -1727,7 +1728,16 @@ export component Lanes inherits Rectangle {
             property <length> to-y;
 
             pointer-event(event) => {
-                if (event.kind == PointerEventKind.down) {
+                if (event.button == PointerEventButton.right) {
+                    if (event.kind == PointerEventKind.up) {
+                        menu.request-x = wheel.mouse-x;
+                        menu.request-y = wheel.mouse-y;
+                        root.asked = true;
+                        root.track-context(
+                            Math.max(0, root.seconds-at(self.mouse-x)),
+                            root.stack-y(self.mouse-y));
+                    }
+                } else if (event.kind == PointerEventKind.down) {
                     root.floor-pressed();
                     self.additive = event.modifiers.shift;
                     self.from-x = self.mouse-x;

@@ -2197,10 +2197,13 @@ impl Studio {
     }
 
     /// The right-click menu: the bin card's when it was opened on one,
-    /// else the clip's.
+    /// the empty track's when opened on a gap, else the clip's.
     pub(super) fn menu(&self) -> Vec<MenuItemData> {
         if let Some(id) = self.menu_media.as_deref() {
             return self.media_menu(id);
+        }
+        if let Some((track_id, at)) = self.menu_gap.as_ref() {
+            return self.gap_menu(track_id, *at);
         }
         let Some(clip) = self.menu_target.as_ref().and_then(|id| self.clip(id)) else {
             return Vec::new();
@@ -2208,6 +2211,7 @@ impl Studio {
         let locked = self.locked(&clip.track_id);
         let playhead = f64::from(self.playhead);
         let straddled = clip.start < playhead && playhead < clip.start + clip.duration;
+        let has_gap_before = !locked && self.gap_before_clip(clip).is_some();
 
         let action =
             |id: &str, label: String, glyph: Glyph, shortcut: &str, enabled: bool| MenuItemData {
@@ -2258,6 +2262,13 @@ impl Studio {
                 Glyph::Plus,
                 &keymap::label(&self.prefs, "paste"),
                 !self.clipboard.is_empty(),
+            ),
+            action(
+                "close-gap",
+                t("shortcuts.rippleDelete"),
+                Glyph::SkipBack,
+                "",
+                has_gap_before,
             ),
             rule(),
             action(
@@ -2438,6 +2449,157 @@ impl Studio {
         // closes the gap is the tray's magnetic switch, a setting of the
         // timeline rather than a choice to make at every clip.
         rows
+    }
+
+    /// Context menu when right-clicking an empty spot on a timeline track.
+    fn gap_menu(&self, track_id: &str, at: f64) -> Vec<MenuItemData> {
+        let locked = self.locked(track_id);
+        let can_close = !locked && self.gap_span_at(track_id, at).is_some();
+        let action = |id: &str, label: String, glyph: Glyph, shortcut: &str, enabled: bool| {
+            MenuItemData {
+                id: id.into(),
+                label: label.into(),
+                kind: MenuRow::Action,
+                glyph,
+                shortcut: shortcut.into(),
+                enabled,
+                danger: false,
+                checkable: false,
+                checked: false,
+            }
+        };
+        vec![
+            action(
+                "close-gap",
+                t("shortcuts.rippleDelete"),
+                Glyph::SkipBack,
+                "",
+                can_close,
+            ),
+            action(
+                "paste",
+                t("studio.paste"),
+                Glyph::Plus,
+                &keymap::label(&self.prefs, "paste"),
+                !locked && !self.clipboard.is_empty(),
+            ),
+        ]
+    }
+
+    /// Finds the empty gap `(gap_start, next_clip_start)` immediately before `clip`
+    /// on its track, or `None` if `clip` is already flush against the previous clip (or `0.0`).
+    pub(crate) fn gap_before_clip(&self, clip: &Clip) -> Option<(f64, f64)> {
+        let prev_end = self
+            .timeline()
+            .clips
+            .iter()
+            .filter(|other| {
+                other.id != clip.id
+                    && other.track_id == clip.track_id
+                    && other.start + other.duration <= clip.start + 1e-4
+            })
+            .map(|other| other.start + other.duration)
+            .fold(0.0_f64, f64::max);
+        (clip.start - prev_end > 1e-4).then_some((prev_end, clip.start))
+    }
+
+    /// Finds the empty gap `(gap_start, next_clip_start)` at `at` on `track_id`
+    /// (or across the timeline if `track_id` has no gap there), returning the
+    /// target `(resolved_track_id, gap_start, next_clip_start)`.
+    pub(crate) fn gap_span_at(&self, track_id: &str, at: f64) -> Option<(String, f64, f64)> {
+        let span_on = |lane: &str| -> Option<(f64, f64)> {
+            if self.locked(lane) {
+                return None;
+            }
+            let overlaps = self.timeline().clips.iter().any(|clip| {
+                clip.track_id == lane && clip.start <= at && at < clip.start + clip.duration
+            });
+            if overlaps {
+                return None;
+            }
+            let gap_start = self
+                .timeline()
+                .clips
+                .iter()
+                .filter(|clip| clip.track_id == lane && clip.start + clip.duration <= at + 1e-4)
+                .map(|clip| clip.start + clip.duration)
+                .fold(0.0_f64, f64::max);
+            let next_start = self
+                .timeline()
+                .clips
+                .iter()
+                .filter(|clip| clip.track_id == lane && clip.start >= at - 1e-4)
+                .map(|clip| clip.start)
+                .reduce(f64::min)?;
+            (next_start - gap_start > 1e-4).then_some((gap_start, next_start))
+        };
+        if let Some((from, to)) = span_on(track_id) {
+            return Some((track_id.to_owned(), from, to));
+        }
+        if let Some(main) = self.timeline().background_lane()
+            && let Some((from, to)) = span_on(main)
+        {
+            return Some((main.to_owned(), from, to));
+        }
+        for track in &self.timeline().tracks {
+            if let Some((from, to)) = span_on(&track.id) {
+                return Some((track.id.clone(), from, to));
+            }
+        }
+        None
+    }
+
+    /// Closes the empty gap `[gap_start, next_start)` on `track_id` by pulling
+    /// all subsequent clips on that track (and linked tracks if `track_id` is the
+    /// main video lane and linkage is enabled) left by `next_start - gap_start`.
+    pub fn close_gap_span(&mut self, track_id: &str, gap_start: f64, next_start: f64) {
+        let gap = next_start - gap_start;
+        if gap <= 1e-4 || self.locked(track_id) {
+            return;
+        }
+        let follow = self.timeline().linkage
+            && self.timeline().background_lane() == Some(track_id);
+        let mut moves: Vec<ClipMove> = self
+            .timeline()
+            .clips
+            .iter()
+            .filter(|clip| {
+                if clip.track_id == track_id {
+                    clip.start >= next_start - 1e-4
+                } else if follow && !self.locked(&clip.track_id) {
+                    clip.start >= next_start - 1e-4
+                } else {
+                    false
+                }
+            })
+            .map(|clip| ClipMove {
+                clip_id: clip.id.clone(),
+                start: (clip.start - gap).max(0.0),
+                track_id: clip.track_id.clone(),
+            })
+            .collect();
+        moves.sort_by(|a, b| a.start.total_cmp(&b.start));
+        if !moves.is_empty() {
+            self.flush_commit();
+            self.apply(Command::MoveClips { moves });
+        }
+    }
+
+    /// Handles an action chosen from the empty-track context menu.
+    pub fn gap_action(&mut self, track_id: &str, at: f64, action: &str) {
+        let _asked = Asked::by("track menu");
+        match action {
+            "close-gap" => {
+                if let Some((lane, from, to)) = self.gap_span_at(track_id, at) {
+                    self.close_gap_span(&lane, from, to);
+                }
+            }
+            "paste" => {
+                self.seek(at as f32);
+                self.paste_clips(None);
+            }
+            _ => {}
+        }
     }
 
     /// The right-click menu for a card in the bin: the file's verbs, and

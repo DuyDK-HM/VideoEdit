@@ -1923,6 +1923,7 @@ fn start(project: Option<std::path::PathBuf>, smoke: Smoke) -> Result<(), slint:
     editor.on_clip_context(on_window!(|state, id: SharedString| {
         state.menu_token += 1;
         state.menu_media = None;
+        state.menu_gap = None;
         if state.clip(id.as_str()).is_none() {
             state.menu_target = None;
             return;
@@ -1932,11 +1933,22 @@ fn start(project: Option<std::path::PathBuf>, smoke: Smoke) -> Result<(), slint:
         }
         state.menu_target = Some(id.to_string());
     }));
+    editor.on_track_context(on_window!(|state, seconds: f32, y: f32| {
+        let row = state.row_at(y);
+        let Some(track_id) = state.row_track(row).map(|track| track.id.clone()) else {
+            return;
+        };
+        state.menu_token += 1;
+        state.menu_media = None;
+        state.menu_target = None;
+        state.menu_gap = Some((track_id, f64::from(seconds.max(0.0))));
+    }));
     // The bin's cards share the menu's rows and token with the clips; which
     // one was asked for is what the two targets below remember.
     editor.on_media_context(on_window!(|state, row: i32| {
         state.menu_token += 1;
         state.menu_target = None;
+        state.menu_gap = None;
         state.menu_media = state
             .media
             .by_row(state.project(), row)
@@ -1945,6 +1957,10 @@ fn start(project: Option<std::path::PathBuf>, smoke: Smoke) -> Result<(), slint:
     editor.on_menu_selected(on_window!(|state, action: SharedString| {
         if let Some(id) = state.menu_media.clone() {
             state.media_action(&id, action.as_str());
+            return;
+        }
+        if let Some((track_id, at)) = state.menu_gap.take() {
+            state.gap_action(&track_id, at, action.as_str());
             return;
         }
         // The clip the menu was opened on; failing that, the one clip that

@@ -160,6 +160,11 @@ impl Studio {
             "duplicate" => self.duplicate_selected(),
             // Pasted after the clip that was right-clicked, on its lane.
             "paste" => self.paste_clips(Some(id)),
+            "close-gap" => {
+                if let Some((from, to)) = self.gap_before_clip(&clip) {
+                    self.close_gap_span(&clip.track_id, from, to);
+                }
+            }
             "split" => {
                 let at = self.playhead;
                 self.flush_commit();

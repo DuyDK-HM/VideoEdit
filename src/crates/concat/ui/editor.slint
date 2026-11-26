@@ -516,6 +516,7 @@ export global Editor {
     in-out property <length> menu-height;
     in-out property <int> menu-token;
     callback clip-context(id: string);
+    callback track-context(seconds: float, y: length);
     callback menu-selected(id: string);
 
     callback band-selected(from-seconds: float, to-seconds: float,

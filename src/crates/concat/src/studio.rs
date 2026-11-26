@@ -1115,6 +1115,9 @@ pub struct Studio {
     /// The media the bin's menu was opened on, when it was the bin's menu
     /// and not a clip's: the two share one set of rows and one token.
     pub menu_media: Option<String>,
+    /// An empty spot on a timeline track where the context menu was opened:
+    /// `(track_id, time_seconds)`.
+    pub menu_gap: Option<(String, f64)>,
     pub menu_token: i32,
     /// The run of one kind of continuous message being folded into one
     /// line of the activity trail; see `note_activity`.
@@ -3133,6 +3136,7 @@ impl Studio {
             menu_bar_token: 0,
             menu_target: None,
             menu_media: None,
+            menu_gap: None,
             menu_token: 0,
             activity_burst: None,
             toast: ToastState::default(),

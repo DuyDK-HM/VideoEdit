@@ -488,6 +488,7 @@ export component Seat inherits Rectangle {
             menu-height: Editor.menu-height;
             menu-token: Editor.menu-token;
             clip-context(id) => { Editor.clip-context(id); }
+            track-context(seconds, y) => { Editor.track-context(seconds, y); }
             menu-selected(id) => { Editor.menu-selected(id); }
             band-selected(a, b, c, d, additive) => { Editor.band-selected(a, b, c, d, additive); }
             scrolled(seconds) => { Editor.scrolled(seconds); }
