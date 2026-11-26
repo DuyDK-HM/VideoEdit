@@ -37,6 +37,11 @@
 //! has few decoder sessions to give, so at most [`MEDIACODEC_READERS`]
 //! readers hold one at a time and the rest decode in software.
 //!
+//! D3D11VA and VAAPI decoders hold their whole pool of surfaces in video
+//! memory while open, so the readers on them share [`ACCEL_SURFACE_MIB`]
+//! between them by the size of their stream, and the rest decode in
+//! software ([`accel_seat`]).
+//!
 //! ## What happens when it does not work
 //!
 //! Everything falls back to software, and nothing a person sees changes but
@@ -296,12 +301,24 @@ impl Seats {
     /// A seat, or `None` when all of them are taken. The seat is given
     /// back when it drops.
     pub(crate) fn take(&'static self) -> Option<Seat> {
+        self.take_weight(1)
+    }
+
+    /// A seat that counts as `weight` of the limit, or `None` when that
+    /// does not fit any more. A seat heavier than the whole limit is still
+    /// given to the first taker, with every other seat free: one reader
+    /// that big is the most the hardware can be asked for, and refusing it
+    /// would send a file to the CPU that nothing else is competing for.
+    pub(crate) fn take_weight(&'static self, weight: usize) -> Option<Seat> {
         self.taken
             .fetch_update(Ordering::AcqRel, Ordering::Acquire, |taken| {
-                (taken < self.limit).then_some(taken + 1)
+                (taken == 0 || taken + weight <= self.limit).then_some(taken + weight)
             })
             .ok()
-            .map(|_| Seat { seats: self })
+            .map(|_| Seat {
+                seats: self,
+                weight,
+            })
     }
 
     /// How many seats are taken right now.
@@ -314,11 +331,12 @@ impl Seats {
 /// One taken seat; see [`Seats`].
 pub(crate) struct Seat {
     seats: &'static Seats,
+    weight: usize,
 }
 
 impl Drop for Seat {
     fn drop(&mut self) {
-        self.seats.taken.fetch_sub(1, Ordering::AcqRel);
+        self.seats.taken.fetch_sub(self.weight, Ordering::AcqRel);
     }
 }
 
@@ -341,6 +359,72 @@ pub(crate) fn mediacodec_seat() -> Option<Seat> {
         ONCE.call_once(|| {
             log::info!(
                 "{MEDIACODEC_READERS} readers already decode on MediaCodec; more decode in software"
+            );
+        });
+    }
+    seat
+}
+
+/// What the surfaces of the readers decoding on Direct3D 11 (or VAAPI) may
+/// cost the GPU between them, in MiB.
+///
+/// A hwaccel decoder allocates its whole pool of surfaces when it opens,
+/// in video memory and at the stream's full size, and holds them until it
+/// closes - whether or not the reader is being asked for frames. A 4K
+/// 10-bit HEVC one is some twenty P010 surfaces, about half a gigabyte; the
+/// pool keeps up to eight readers warm, and on a timeline cut from fifteen
+/// such files they all were: 4.8 GB of a 5.1 GB budget, all of it in the
+/// decoders, until the compositor's own device was refused memory and fell
+/// to the CPU. These surfaces count against the same per-process budget the
+/// compositor and the window draw within, so they get a share of it: three
+/// such readers - the clip under the playhead, the next at a cut, and one
+/// more - and the rest decode in software, as the pool's readers did before
+/// hardware decode, until a seat comes free as a reader closes. 1080p
+/// readers are a fifth the size or less and many more fit; a lone reader
+/// bigger than the share still gets it, see [`Seats::take_weight`].
+///
+/// VideoToolbox's frames live in memory the machine shares with the rest of
+/// the app and are not counted here.
+const ACCEL_SURFACE_MIB: usize = 1536;
+
+/// Surfaces a hwaccel decoder holds once open: the stream's reference
+/// frames and the pictures in flight. An estimate - D3D11VA's HEVC pool is
+/// 16 reference slots and a few more - on the high side of it on purpose.
+const ACCEL_SURFACES: u64 = 20;
+
+/// MiB a hwaccel decoder of a `width` x `height` stream holds in video
+/// memory once open: its surfaces at 12 bits a pixel, or 24 where the
+/// stream is more than 8-bit and the surface is P010. At least one.
+pub(crate) fn surface_mib(width: u32, height: u32, deep: bool) -> usize {
+    let pixels = u64::from(width) * u64::from(height);
+    let bytes = pixels * 3 / if deep { 1 } else { 2 } * ACCEL_SURFACES;
+    usize::try_from((bytes / (1024 * 1024)).max(1)).unwrap_or(usize::MAX)
+}
+
+/// The readers decoding on the hwaccels whose surfaces are counted; see
+/// [`ACCEL_SURFACE_MIB`].
+static ACCEL_SEATS: Seats = Seats::new(ACCEL_SURFACE_MIB);
+
+/// A seat for a reader about to open `device` on a stream of this size and
+/// `format`, or `None` when the readers already on the hardware have the
+/// share of video memory - said once a process. The seat comes back when
+/// the reader's decoder closes.
+pub(crate) fn accel_seat(device: HwDevice, width: u32, height: u32, format: Pixel) -> Option<Seat> {
+    if !matches!(device, HwDevice::D3d11va | HwDevice::Vaapi) {
+        return ACCEL_SEATS.take_weight(0);
+    }
+    let deep = format
+        .descriptor()
+        // SAFETY: a descriptor points into libavutil's static table, and
+        // every pixel format has at least one component.
+        .is_some_and(|descriptor| unsafe { (*descriptor.as_ptr()).comp[0].depth } > 8);
+    let seat = ACCEL_SEATS.take_weight(surface_mib(width, height, deep));
+    if seat.is_none() {
+        static ONCE: Once = Once::new();
+        ONCE.call_once(|| {
+            log::info!(
+                "readers on {} already hold {ACCEL_SURFACE_MIB} MiB of video memory; more decode in software",
+                device.label()
             );
         });
     }
@@ -809,6 +893,40 @@ mod tests {
         assert!(SEATS.take().is_none());
         drop((second, third));
         assert_eq!(SEATS.taken(), 0);
+    }
+
+    /// Heavy seats fill the limit by their weight, the first taker gets one
+    /// however heavy, and every weight comes back.
+    #[test]
+    fn seats_count_by_weight() {
+        static SEATS: Seats = Seats::new(10);
+        let six = SEATS.take_weight(6).expect("six of ten");
+        assert!(SEATS.take_weight(5).is_none(), "six and five are eleven");
+        let four = SEATS.take_weight(4).expect("six and four are ten");
+        assert!(SEATS.take().is_none(), "full");
+        assert_eq!(SEATS.taken(), 10);
+        drop(six);
+        assert_eq!(SEATS.taken(), 4);
+        drop(four);
+        let huge = SEATS.take_weight(50).expect("alone, whatever it weighs");
+        assert!(SEATS.take().is_none(), "and nothing beside it");
+        drop(huge);
+        assert_eq!(SEATS.taken(), 0);
+    }
+
+    /// The share of video memory fits three 4K 10-bit decoders, not four -
+    /// the eight that opened on the timeline this was found on were 4 GB -
+    /// and many of 1080p.
+    #[test]
+    fn the_surface_share_holds_three_4k_decoders() {
+        let k4 = surface_mib(2160, 3840, true);
+        assert!((400..=550).contains(&k4), "half a gigabyte, not {k4} MiB");
+        assert!(3 * k4 <= ACCEL_SURFACE_MIB && 4 * k4 > ACCEL_SURFACE_MIB);
+        let k4_8bit = surface_mib(3840, 2160, false);
+        assert!(k4_8bit * 2 <= k4 + 1, "8-bit surfaces are half the size");
+        let hd = surface_mib(1920, 1080, false);
+        assert!(ACCEL_SURFACE_MIB / hd >= 20, "twenty 1080p decoders fit");
+        assert_eq!(surface_mib(0, 0, true), 1, "never free");
     }
 
     /// A decoder is tried once; its verdict stands, good or bad, and the

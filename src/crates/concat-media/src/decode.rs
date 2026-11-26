@@ -53,8 +53,10 @@ enum Codec<'a> {
 /// Where a reader's codec runs when it is not plain software.
 enum OnChip {
     /// A hwaccel: frames arrive in the device's memory, in this format,
-    /// and are copied back.
-    Accel(HwDevice, Pixel),
+    /// and are copied back. Once opened by [`Decoder::open`] it holds its
+    /// share of the device's video memory for as long as it lasts; see
+    /// [`hardware::accel_seat`].
+    Accel(HwDevice, Pixel, #[allow(dead_code, reason = "held for its Drop")] Option<Seat>),
     /// The platform's own decoder behind a codec of its own: frames arrive
     /// in memory already. Holds its seat on the chip for as long as it
     /// lasts; see [`hardware::MEDIACODEC_READERS`].
@@ -64,7 +66,7 @@ enum OnChip {
 impl OnChip {
     fn device(&self) -> HwDevice {
         match self {
-            OnChip::Accel(device, _) | OnChip::Wrapped { device, .. } => *device,
+            OnChip::Accel(device, ..) | OnChip::Wrapped { device, .. } => *device,
         }
     }
 }
@@ -799,10 +801,26 @@ impl Decoder {
                     None => software()?,
                 }
             }
-            (None, Some(device)) => match hardware::device(device) {
-                Some(device) => {
+            // A hwaccel: its surfaces are video memory the compositor shares
+            // the budget of, so a reader with no share left decodes in
+            // software; see `hardware::accel_seat`.
+            (None, Some(device)) => match hardware::device(device)
+                .and_then(|opened| {
+                    hardware::accel_seat(opened.kind(), coded.0, coded.1, format)
+                        .map(|seat| (opened, seat))
+                })
+            {
+                Some((device, seat)) => {
                     match Self::open_codec(path, &stream, options, Codec::On(&device)) {
-                        Ok(opened) => opened,
+                        Ok((decoder, chip)) => (
+                            decoder,
+                            chip.map(|chip| match chip {
+                                OnChip::Accel(kind, pixel, _) => {
+                                    OnChip::Accel(kind, pixel, Some(seat))
+                                }
+                                other => other,
+                            }),
+                        ),
                         Err(error) => {
                             hardware::note_fallback(
                                 device.kind(),
@@ -938,7 +956,7 @@ impl Decoder {
             Codec::On(device) => (
                 device
                     .attach(&mut context)
-                    .map(|format| OnChip::Accel(device.kind(), format)),
+                    .map(|format| OnChip::Accel(device.kind(), format, None)),
                 None,
             ),
             Codec::Named(name) => {
@@ -1298,7 +1316,7 @@ impl Decoder {
             // SAFETY: a frame this reader owns; a plain field read.
             let lasts = ffi::seconds(unsafe { (*frame.as_ptr()).duration }, self.time_base)
                 .filter(|lasts| *lasts > Rational::ZERO);
-            if let Some(&OnChip::Accel(device, format)) = self.hardware.as_ref() {
+            if let Some(&OnChip::Accel(device, format, _)) = self.hardware.as_ref() {
                 if frame.format() == format {
                     frame = match hardware::download(&frame) {
                         Ok(copy) => copy,
