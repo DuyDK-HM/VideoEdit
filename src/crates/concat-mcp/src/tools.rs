@@ -217,7 +217,7 @@ pub fn catalogue() -> Vec<Tool> {
         Tool {
             name: "timeline_read",
             title: "Read the timeline",
-            description: "An open project's active timeline as a compact summary: frame size and fps, the lanes (`tracks`, top to bottom, with their ids), every clip in time order with its id, kind, track, start, duration and end in seconds and whatever is not at its default (speed, volume, opacity, transform, effects, keyframed properties, text), and the media bin with each item's id. Read this to learn the ids other tools need.",
+            description: "An open project's active timeline as a compact summary: frame size and fps, the lanes (`tracks`, bottom first - the last is drawn on top - each with its id and its `index` in the stack, the one `track_move` takes), every clip in time order with its id, kind, track, start, duration and end in seconds and whatever is not at its default (speed, volume, opacity, transform, effects, keyframed properties, text), and the media bin with each item's id. Read this to learn the ids other tools need.",
             read_only: true,
             destructive: false,
             idempotent: true,
@@ -478,6 +478,12 @@ pub fn catalogue() -> Vec<Tool> {
             "Add a lane",
             "Adds a lane to the active timeline: on top, or with `bottom: true` under every other. Its id is `createdId`.",
             "addTrack",
+        ),
+        command(
+            "track_move",
+            "Move a lane",
+            "Moves a lane (`trackId`, from `timeline_read`) to a new place in the active timeline's stack, its clips with it, which changes what covers what. `index` counts the stack bottom first, as `timeline_read` lists it - 0 is the lowest lane, the last is drawn on top - with the lane already taken out of its old place; past the top it lands on top. An unknown id or the place it already has changes nothing.",
+            "moveTrack",
         ),
         method(
             "effects_list",
@@ -1138,6 +1144,10 @@ mod tests {
                 json!({ "path": "/tmp/Cut", "clipId": "c1", "entry": 0, "key": "amount", "at": 0.5, "value": 0.8 }),
             ),
             ("track_add", json!({ "path": "/tmp/Cut", "bottom": false })),
+            (
+                "track_move",
+                json!({ "path": "/tmp/Cut", "trackId": "t1", "index": 2 }),
+            ),
             (
                 "clips_add_sequence",
                 json!({ "path": "/tmp/Cut", "mediaIds": ["m1", "m2"], "start": 0.0 }),

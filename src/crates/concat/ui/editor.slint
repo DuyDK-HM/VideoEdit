@@ -530,6 +530,10 @@ export global Editor {
     callback track-flag-changed(index: int, visible: bool, muted: bool, locked: bool);
     callback track-sized(index: int, size: TrackSize);
     callback track-removed(index: int);
+    /// The lane on row `index` (top first) dragged by its header and let
+    /// go `y` down the stack, on the axis TrackData.top counts. Rust works
+    /// out the gap and turns it into MoveTrack's bottom-first index.
+    callback track-moved(index: int, y: length);
     /// A tab dragged to a new place in the strip. `to` is counted with the
     /// tab already out of its old slot, the way MoveTimeline counts.
     callback tab-moved(from: int, to: int);

@@ -79,7 +79,7 @@ mod voice;
 use slint::{Model, ModelRc, SharedString, VecModel};
 
 use crate::dock::{
-    Dock, DockLayout, SEAT_GAP, default_dock, lay_out, nearest_row, row_at, row_top,
+    Dock, DockLayout, SEAT_GAP, default_dock, gap_at, lay_out, nearest_row, row_at, row_top,
 };
 use crate::format::{
     WAVE_BAR, WAVE_PITCH, colour_of, frames_timecode, hex_of, hex_rgba, hex_with_alpha,
@@ -2012,6 +2012,7 @@ fn command_kind(command: &Command) -> &'static str {
                 "Unmute track"
             }
         }
+        Command::MoveTrack { .. } => "Reorder tracks",
         Command::AddTimeline => "New timeline",
         Command::RemoveTimeline { .. } => "Delete timeline",
         Command::SetTimelineVideo { .. } => "Project settings",

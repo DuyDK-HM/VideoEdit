@@ -422,6 +422,43 @@ pub fn nearest_row(heights: &[f32], y: f32) -> i32 {
     best
 }
 
+/// The gap between rows a point down the stack is nearest: 0 above the
+/// first row, `heights.len()` below the last, `n` between rows `n - 1` and
+/// `n`. Counted top first, over the rows as they stand.
+///
+/// Where a lane dragged by its header lands: the rows whose middle the
+/// point is past are the ones it goes under. The header column draws its
+/// drop line by the same halves - see TrackHeaders - so the line and the
+/// landing cannot disagree.
+pub fn gap_at(heights: &[f32], y: f32) -> usize {
+    let mut top = 0.0_f32;
+    heights
+        .iter()
+        .take_while(|&&height| {
+            let middle = top + height / 2.0;
+            top += height;
+            y >= middle
+        })
+        .count()
+}
+
+#[cfg(test)]
+mod gap_tests {
+    use super::*;
+
+    #[test]
+    fn a_point_lands_in_the_gap_its_row_half_names() {
+        let heights = [40.0, 20.0, 60.0];
+        assert_eq!(gap_at(&heights, -5.0), 0, "above the stack is the top");
+        assert_eq!(gap_at(&heights, 19.0), 0, "the first row's upper half");
+        assert_eq!(gap_at(&heights, 21.0), 1, "the first row's lower half");
+        assert_eq!(gap_at(&heights, 45.0), 1);
+        assert_eq!(gap_at(&heights, 55.0), 2);
+        assert_eq!(gap_at(&heights, 95.0), 3);
+        assert_eq!(gap_at(&heights, 500.0), 3, "below the stack is the bottom");
+    }
+}
+
 #[cfg(test)]
 mod saved_tests {
     use super::*;

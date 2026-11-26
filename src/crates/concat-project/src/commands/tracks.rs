@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // SPDX-FileCopyrightText: 2026 Jareer Abdullah
 
-//! Lanes: adding, removing and muting or hiding them.
+//! Lanes: adding, removing, reordering and muting or hiding them.
 //!
 //! One arm per command, exactly as [`super::apply`] routes them here;
 //! everything these arms share lives in the parent module.
@@ -71,6 +71,29 @@ pub(super) fn apply(
             Ok(Outcome {
                 created_id: None,
                 applied,
+            })
+        }
+
+        Command::MoveTrack { track_id, index } => {
+            // Counted as MoveTimeline counts its tabs, over the stored,
+            // bottom-first stack: the renderer stacks by this order.
+            let timeline = project.active_mut();
+            let Some(from) = timeline
+                .tracks
+                .iter()
+                .position(|track| track.id == track_id)
+            else {
+                return Ok(Outcome::default());
+            };
+            let to = index.min(timeline.tracks.len() - 1);
+            if to == from {
+                return Ok(Outcome::default());
+            }
+            let track = timeline.tracks.remove(from);
+            timeline.tracks.insert(to, track);
+            Ok(Outcome {
+                created_id: None,
+                applied: true,
             })
         }
 

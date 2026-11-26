@@ -219,6 +219,16 @@ component Header inherits Rectangle {
     callback flag-changed(visible: bool, muted: bool, locked: bool);
     callback sized(size: TrackSize);
     callback removed();
+    /// The row is being dragged by its header, the pointer `y` below the
+    /// row's own top edge. Fired on every move once the press has travelled.
+    callback dragged(y: length);
+    /// The drag let go, `y` below the row's top edge as for `dragged`.
+    callback dropped(y: length);
+    /// The drag ended without a landing: the pointer was taken away.
+    callback drag-cancelled();
+
+    // Faded while in the air, as a tab or a bin card is.
+    opacity: row.dragging ? 0.45 : 1.0;
 
     Rectangle {
         x: 0;
@@ -228,7 +238,35 @@ component Header inherits Rectangle {
         background: Theme.line;
     }
 
+    // The row's bare background is the handle that moves the lane up or
+    // down the stack. The switches on it are TouchAreas of their own and
+    // take their presses first, so a press on one is still a click; only a
+    // press on the space between them can start a drag, and only once it
+    // has travelled, so a stray click does nothing.
     row := TouchArea {
+        property <bool> dragging;
+
+        mouse-cursor: self.dragging ? grabbing : grab;
+
+        moved => {
+            if (self.pressed) {
+                self.dragging = self.dragging || Math.abs(self.mouse-y - self.pressed-y) > 4px;
+                if (self.dragging) {
+                    root.dragged(self.mouse-y);
+                }
+            }
+        }
+        pointer-event(event) => {
+            if (event.kind == PointerEventKind.up && self.dragging) {
+                root.dropped(self.mouse-y);
+            } else if (event.kind == PointerEventKind.cancel && self.dragging) {
+                root.drag-cancelled();
+            }
+            if (event.kind == PointerEventKind.up || event.kind == PointerEventKind.cancel) {
+                self.dragging = false;
+            }
+        }
+
         HorizontalLayout {
             padding-left: 8px;
             padding-right: 4px;
@@ -335,6 +373,17 @@ export component TrackHeaders inherits Rectangle {
     callback flag-changed(index: int, visible: bool, muted: bool, locked: bool);
     callback sized(index: int, size: TrackSize);
     callback removed(index: int);
+    /// Row `index` (top first) was dragged by its header and let go `y`
+    /// down the stack, on the axis TrackData.top counts: from the first
+    /// lane's top edge, scroll undone. Rust finds the gap from `y` by the
+    /// same row halves the drop line below is drawn by, and turns it into
+    /// the model's bottom-first order.
+    callback moved(index: int, y: length);
+
+    /// The row a header drag is moving, top first; -1 when none is.
+    property <int> drag-row: -1;
+    /// Where that drag's pointer is, on the axis `moved` reports.
+    property <length> drag-y;
 
     clip: true;
 
@@ -373,6 +422,39 @@ export component TrackHeaders inherits Rectangle {
             }
             sized(size) => { root.sized(index, size); }
             removed => { root.removed(index); }
+            dragged(y) => {
+                root.drag-row = index;
+                root.drag-y = track.top + y;
+            }
+            dropped(y) => {
+                root.drag-row = -1;
+                root.moved(index, track.top + y);
+            }
+            drag-cancelled => { root.drag-row = -1; }
+        }
+
+        // Where a dragged lane will land: a line across the column in the
+        // gap it is about to take, in the accent every other drop target in
+        // the window is drawn in. One candidate per row, and the row the
+        // pointer is over draws it - at its top edge over its upper half, at
+        // its bottom edge over its lower one; the first and last rows also
+        // own the space past the ends of the stack. Rust lands the lane by
+        // the same halves (`gap_at`). No line on either edge of the dragged
+        // row itself: dropping it there leaves it where it is.
+        for track[index] in root.tracks: Rectangle {
+            property <bool> under: root.drag-row >= 0
+                && (index == 0 || root.drag-y >= track.top)
+                && (index == root.tracks.length - 1 || root.drag-y < track.top + track.height);
+            property <int> gap: root.drag-y < track.top + track.height / 2 ? index : index + 1;
+
+            x: 0;
+            y: root.ruler-height + track.top - root.track-scroll
+                + (self.gap == index ? 0px : track.height) - 1px;
+            width: parent.width;
+            height: 2px;
+            visible: self.under && self.gap != root.drag-row && self.gap != root.drag-row + 1
+                && self.y >= root.ruler-height - 1px && self.y < root.height;
+            background: Theme.accent;
         }
 
         // The bar, over the rows and under the corner. On the trailing edge,

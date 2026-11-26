@@ -1327,6 +1327,9 @@ fn start(project: Option<std::path::PathBuf>, smoke: Smoke) -> Result<(), slint:
     editor.on_track_removed(on_window!(|state, row: i32| {
         state.ask_remove_track(row);
     }));
+    editor.on_track_moved(on_window!(|state, row: i32, y: f32| {
+        state.move_track(row, y);
+    }));
 
     // ── the gestures ──
     editor.on_clip_pressed(on_lanes!(|state,

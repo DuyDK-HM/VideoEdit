@@ -902,6 +902,18 @@ pub enum Command {
         /// The new setting.
         value: bool,
     },
+    /// Moves a lane to a new place in the stack, carrying its clips with
+    /// it: they sit on the lane by id, so only the stacking order - which
+    /// picture covers which - changes. Unlike [`Command::MoveTimeline`]
+    /// this is an edit, recorded in undo history.
+    MoveTrack {
+        /// The lane to move. An unknown id is a no-op.
+        track_id: String,
+        /// Where it lands in the stack, 0-based and counted bottom first
+        /// the way the tracks are stored (0 is the lowest lane), with the
+        /// lane already removed from its old slot. Clamped to the top.
+        index: usize,
+    },
     /// Adds a fresh timeline - four new lanes, "Timeline N" after the
     /// highest in use - and makes it active. Mints a "tl" id.
     AddTimeline,
@@ -1429,7 +1441,8 @@ pub fn apply(
         }
         command @ (Command::AddTrack { .. }
         | Command::RemoveTrack { .. }
-        | Command::SetTrackFlag { .. }) => tracks::apply(project, mint, command),
+        | Command::SetTrackFlag { .. }
+        | Command::MoveTrack { .. }) => tracks::apply(project, mint, command),
         command @ (Command::AddTimeline
         | Command::SetTimelineVideo { .. }
         | Command::SetTimelineBackground { .. }

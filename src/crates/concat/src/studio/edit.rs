@@ -70,6 +70,28 @@ impl Studio {
         self.confirm = Some(Confirm::RemoveTrack { track_id });
     }
 
+    /// The lane on `row` dragged by its header and let go `y` down the
+    /// stack, on the axis the lanes' own drops use. Rows count from the top
+    /// of the panel; `MoveTrack` counts the stored stack, bottom first, with
+    /// the lane already out of its old slot - so the gap the pointer names
+    /// is turned over and discounted here, the one place the orders meet.
+    pub fn move_track(&mut self, row: i32, y: f32) {
+        let Some(track_id) = self.row_track(row).map(|track| track.id.clone()) else {
+            return;
+        };
+        let count = self.timeline().tracks.len();
+        // Where the lane sits now, bottom first.
+        let from = count - 1 - row as usize;
+        // The gap it was let go in: top first over the rows as they stand,
+        // then bottom first - the gap under stored lane `k` is gap `k`.
+        let gap = count - gap_at(&self.lane_heights(), y).min(count);
+        let index = if from < gap { gap - 1 } else { gap };
+        if index == from {
+            return;
+        }
+        self.apply(Command::MoveTrack { track_id, index });
+    }
+
     /// The confirmation sheet's answer: go ahead with what it asked about.
     pub fn confirm_accepted(&mut self) {
         match self.confirm.take() {

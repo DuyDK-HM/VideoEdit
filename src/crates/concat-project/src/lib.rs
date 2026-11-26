@@ -3473,6 +3473,76 @@ mod tests {
     }
 
     #[test]
+    fn a_track_moves_through_the_stack_and_undo_puts_it_back() {
+        // Indices count the stored stack, bottom first, with the lane
+        // already out of its old slot - the way MoveTimeline counts tabs.
+        let mut editor = Editor::new();
+        let order = |editor: &Editor| -> Vec<String> {
+            editor
+                .project()
+                .active()
+                .tracks
+                .iter()
+                .map(|track| track.id.clone())
+                .collect()
+        };
+        let start = order(&editor);
+        assert!(start.len() >= 3, "a fresh timeline has lanes to reorder");
+        let (bottom, middle, top) = (
+            start[0].clone(),
+            start[1].clone(),
+            start[start.len() - 1].clone(),
+        );
+
+        // Up: the bottom lane lifted one slot.
+        let outcome = editor
+            .apply(Command::MoveTrack {
+                track_id: bottom.clone(),
+                index: 1,
+            })
+            .expect("moves");
+        assert!(outcome.applied);
+        let after_up = order(&editor);
+        assert_eq!(after_up[..2], [middle, bottom]);
+
+        // Down: the top lane sent to the bottom.
+        editor
+            .apply(Command::MoveTrack {
+                track_id: top.clone(),
+                index: 0,
+            })
+            .expect("moves");
+        assert_eq!(order(&editor)[0], top);
+
+        // Past the top clamps to the top.
+        editor
+            .apply(Command::MoveTrack {
+                track_id: top.clone(),
+                index: 99,
+            })
+            .expect("moves");
+        assert_eq!(order(&editor).last(), Some(&top));
+        assert_eq!(order(&editor), after_up, "back where the first move left it");
+
+        // A same-slot move and an unknown id apply nothing, so neither
+        // records history.
+        let before_can_undo = editor.can_undo();
+        for (track_id, index) in [(top.clone(), 99), ("nope".to_owned(), 0)] {
+            let outcome = editor
+                .apply(Command::MoveTrack { track_id, index })
+                .expect("no-op");
+            assert!(!outcome.applied);
+        }
+        assert_eq!(editor.can_undo(), before_can_undo);
+
+        // Each move is its own undo step: three back is where it started.
+        assert!(editor.undo() && editor.undo());
+        assert_eq!(order(&editor), after_up);
+        assert!(editor.undo());
+        assert_eq!(order(&editor), start);
+    }
+
+    #[test]
     fn undo_and_redo_walk_the_history() {
         let (mut editor, _, clip_id) = fixture();
         editor
@@ -5443,6 +5513,10 @@ mod tests {
                 track_id: "T1".to_owned(),
                 flag: TrackFlag::Muted,
                 value: true,
+            },
+            Command::MoveTrack {
+                track_id: "T1".to_owned(),
+                index: 2,
             },
             Command::AddTimeline,
             Command::RemoveTimeline {

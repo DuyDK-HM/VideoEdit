@@ -3407,8 +3407,9 @@ pub struct Timeline {
     #[serde(default, skip_serializing_if = "Background::is_none")]
     #[serde(deserialize_with = "wire::background")]
     pub background: Background,
-    /// The lanes, top to bottom. Never empty - `RemoveTrack` keeps a floor
-    /// of one.
+    /// The lanes, bottom first: the last is the one drawn on top, and a
+    /// lane's index here is its place in the stack. Never empty -
+    /// `RemoveTrack` keeps a floor of one.
     #[serde(deserialize_with = "wire::list")]
     pub tracks: Vec<Track>,
     /// Every clip on this timeline, in insertion order, not time order -
