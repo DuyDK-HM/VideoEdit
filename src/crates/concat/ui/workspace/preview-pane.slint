@@ -1341,8 +1341,8 @@ export component PreviewPane inherits Rectangle {
                             snug: true;
                             width: self.natural-width;
                             current: root.quality-index;
-                            options: [I18n.t("common.full"), I18n.t("previewPane.half"), I18n.t("previewPane.quarter")];
-                            details: ["1:1", "1:2", "1:4"];
+                            options: [I18n.t("common.full"), I18n.t("previewPane.half"), I18n.t("previewPane.quarter"), "1/8"];
+                            details: ["1:1", "1:2", "1:4", "1:8"];
                             changed(index) => { root.quality-changed(index); }
                         }
                     }

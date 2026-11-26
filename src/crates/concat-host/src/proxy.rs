@@ -31,8 +31,8 @@ const PIXELS_WITHOUT_PROXY: u64 = 1920 * 1080;
 /// shorter than [`SHORTEST_LONG_SIDE`]. Half (not upstream's quarter):
 /// the fork plays proxies at Full too, where a 4K file's 960-pixel copy
 /// is a visible blur and its 1920-pixel one is not.
-const DIVISOR: u32 = 2;
-const SHORTEST_LONG_SIDE: u32 = 960;
+const DIVISOR: u32 = 4;
+const SHORTEST_LONG_SIDE: u32 = 480;
 
 /// Whether a `width` by `height` file is worth a proxy.
 pub fn wanted(width: u32, height: u32) -> bool {
@@ -360,14 +360,14 @@ mod tests {
 
     #[test]
     fn a_proxy_is_half_the_long_side_but_never_tiny_or_larger() {
-        assert_eq!(size_for(3840, 2160), (1920, 1080));
-        assert_eq!(size_for(7680, 4320), (3840, 2160));
+        assert_eq!(size_for(3840, 2160), (960, 540));
+        assert_eq!(size_for(7680, 4320), (1920, 1080));
         // A tall file keeps its way up.
-        assert_eq!(size_for(2160, 3840), (1080, 1920));
-        assert_eq!(size_for(2560, 1440), (1280, 720));
-        // A file too small for a half gets the floor, never upscaled.
-        assert_eq!(size_for(1600, 1200), (960, 720));
-        assert_eq!(size_for(640, 480), (640, 480));
+        assert_eq!(size_for(2160, 3840), (540, 960));
+        assert_eq!(size_for(2560, 1440), (640, 360));
+        // A file too small for a quarter gets the floor, never upscaled.
+        assert_eq!(size_for(1600, 1200), (480, 360));
+        assert_eq!(size_for(640, 480), (480, 360));
         // Odd sizes come out even, and nothing is ever under two.
         let (w, h) = size_for(3841, 2161);
         assert!(w % 2 == 0 && h % 2 == 0);
@@ -414,7 +414,7 @@ mod tests {
         let proxy = existing(&project, &source, None).expect("the proxy was written");
         let info = concat_media::probe(&proxy).expect("probes");
         let video = info.video.expect("has pictures");
-        assert_eq!((video.width, video.height), (1280, 720));
+        assert_eq!((video.width, video.height), (640, 360));
         let pool = crate::scheduler().pool();
         assert_eq!(
             pool.proxy_of(Path::new(&source)).as_deref(),

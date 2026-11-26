@@ -240,7 +240,7 @@ impl MonitorPane {
             }
             MonitorMsg::QualityChanged(index) => {
                 let id = studio.project().active_timeline_id.clone();
-                self.quality.insert(id, (index.max(0) as usize).min(2));
+                self.quality.insert(id, (index.max(0) as usize).min(3));
                 self.request(studio, Lane::Main);
             }
             MonitorMsg::Opened => self.failed = false,
@@ -303,12 +303,12 @@ impl MonitorPane {
     }
 
     /// The quality tier for the project's active timeline: 0 full, 1
-    /// half, 2 quarter. Half until chosen.
+    /// half, 2 quarter, 3 eighth. Quarter until chosen.
     pub fn quality_of(&self, project: &Project) -> usize {
         self.quality
             .get(&project.active_timeline_id)
             .copied()
-            .unwrap_or(1)
+            .unwrap_or(2)
     }
 
     /// The frame's size at a quality tier: the output scaled, rounded to
@@ -317,7 +317,8 @@ impl MonitorPane {
         let scale = match quality {
             0 => 1.0,
             1 => 0.5,
-            _ => 0.25,
+            2 => 0.25,
+            _ => 0.125,
         };
         let side = |px: u32| ((f64::from(px) * scale).round() as u32).max(2) & !1;
         (side(width), side(height))
@@ -492,14 +493,15 @@ mod tests {
         assert_eq!(MonitorPane::frame_size(0, (1920, 1080)), (1920, 1080));
         assert_eq!(MonitorPane::frame_size(1, (1920, 1080)), (960, 540));
         assert_eq!(MonitorPane::frame_size(2, (1920, 1080)), (480, 270));
+        assert_eq!(MonitorPane::frame_size(3, (1920, 1080)), (240, 134));
         // An odd output at half is rounded to even, as the encoder and the
         // chroma planes need.
         assert_eq!(MonitorPane::frame_size(1, (1001, 1001)), (500, 500));
         // Nothing gets smaller than two pixels a side, whatever the tier.
         assert_eq!(MonitorPane::frame_size(2, (1, 1)), (2, 2));
         assert_eq!(MonitorPane::frame_size(2, (0, 0)), (2, 2));
-        // A tier past the picker's three is the smallest one.
-        assert_eq!(MonitorPane::frame_size(9, (400, 400)), (100, 100));
+        // A tier past the picker's four is the smallest one.
+        assert_eq!(MonitorPane::frame_size(9, (400, 400)), (50, 50));
     }
 
     #[test]
@@ -524,10 +526,10 @@ mod tests {
             active_timeline_id: "a".to_owned(),
             ..Project::default()
         };
-        assert_eq!(pane.quality_of(&project), 1);
-        pane.quality.insert("a".to_owned(), 2);
         assert_eq!(pane.quality_of(&project), 2);
+        pane.quality.insert("a".to_owned(), 3);
+        assert_eq!(pane.quality_of(&project), 3);
         project.active_timeline_id = "b".to_owned();
-        assert_eq!(pane.quality_of(&project), 1, "another timeline has its own");
+        assert_eq!(pane.quality_of(&project), 2, "another timeline has its own");
     }
 }
