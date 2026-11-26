@@ -3886,7 +3886,14 @@ impl Timeline {
             .find(|track| {
                 self.clips
                     .iter()
-                    .any(|clip| clip.track_id == track.id && clip.kind.is_visual())
+                    .any(|clip| clip.track_id == track.id && clip.kind == ClipKind::Video)
+            })
+            .or_else(|| {
+                self.tracks.iter().find(|track| {
+                    self.clips
+                        .iter()
+                        .any(|clip| clip.track_id == track.id && clip.kind.is_visual())
+                })
             })
             .map(|track| track.id.as_str())
     }
