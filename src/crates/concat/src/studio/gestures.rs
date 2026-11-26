@@ -185,7 +185,10 @@ impl Studio {
                 let speed = self.clip(&id).map_or(1.0, |clip| clip.speed as f32);
                 // A plain trim stops at the neighbours, as the command will;
                 // a magnetic one moves them, so the lane is all its room.
-                let (floor, ceiling) = if self.prefs.magnetic {
+                let is_image = self
+                    .clip(&id)
+                    .is_some_and(|clip| clip.kind == model::ClipKind::Image);
+                let (floor, ceiling) = if self.prefs.magnetic && !is_image {
                     (0.0, f32::INFINITY)
                 } else {
                     self.timeline()
@@ -308,6 +311,7 @@ impl Studio {
                 };
                 if delta.abs() > 1e-6 {
                     let id = clip.clone();
+                    let is_image = after.kind == model::ClipKind::Image;
                     self.apply(Command::TrimClip {
                         clip_id: clip,
                         edge: match edge {
@@ -317,7 +321,7 @@ impl Studio {
                         delta,
                         // Magnetic: the lane closes behind the edge.
                         // https://github.com/jub0t/Concat/issues/106
-                        ripple: self.prefs.magnetic,
+                        ripple: self.prefs.magnetic && !is_image,
                     });
                     // Trim follow: a magnetic head trim slides the clip back
                     // into the gap, and the playhead goes with its first

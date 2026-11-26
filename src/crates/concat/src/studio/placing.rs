@@ -216,7 +216,7 @@ impl Studio {
                 media_id: plan.media.clone(),
                 track_id,
                 start: f64::from(plan.start),
-                ripple: true,
+                ripple: plan.kind != ClipKind::Image,
             })
         };
         if let Some(id) = created {
