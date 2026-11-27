@@ -22,6 +22,13 @@ fn main() {
         .define("BUNGEE_VISIBILITY", Some(""))
         .define("BUNGEE_SELF_TEST", Some("0"))
         .define("eigen_assert", Some("BUNGEE_ASSERT1"))
+        // Eigen under a name of its own. Its allocator is inline code, which
+        // the linker keeps one copy of per name across the whole program,
+        // and ONNX Runtime's copy - built for AVX, so on 32 bytes with the
+        // offset kept in front of the block - was the one Bungee got, while
+        // its own code freed the pointer as given: every stretcher let go
+        // corrupted the heap. See `tests::eigen_is_bungees_own`.
+        .define("Eigen", Some("BungeeEigen"))
         .define("EIGEN_DONT_PARALLELIZE", Some("1"))
         .define("BUNGEE_VERSION", Some("\"61f52bf\""))
         // Signed overflow wraps, as Bungee's CMake asks of GCC and Clang.
@@ -40,6 +47,18 @@ fn main() {
     files.sort();
     bungee.files(&files);
     bungee.compile("bungee");
+    // For the test that looks the library over; see `tests::eigen_is_bungees_own`.
+    let target_env = std::env::var("CARGO_CFG_TARGET_ENV").unwrap_or_default();
+    let library = if target_env == "msvc" {
+        "bungee.lib"
+    } else {
+        "libbungee.a"
+    };
+    let out_dir = std::env::var("OUT_DIR").expect("cargo sets OUT_DIR");
+    println!(
+        "cargo:rustc-env=CONCAT_STRETCH_BUNGEE_LIB={}",
+        Path::new(&out_dir).join(library).display()
+    );
 
     let mut pffft = cc::Build::new();
     pffft

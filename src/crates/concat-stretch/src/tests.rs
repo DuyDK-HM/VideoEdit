@@ -353,3 +353,25 @@ fn stereo_stretching_leaves_the_heap_whole() {
         assert!(heap_whole(), "{speed}x: the heap broke when the stretcher was dropped");
     }
 }
+
+/// Eigen's allocator is inline code, so every library built from it
+/// leaves its own copy under the same name, and the linker keeps one for
+/// them all. ONNX Runtime, linked into the app, carries a copy built for
+/// AVX: it allocates on 32 bytes and hides the offset in front of the
+/// block, while Bungee's own code, built without AVX, frees what it is
+/// handed as it is - a pointer into the middle of the block, which the
+/// heap refuses (0xc0000374, in the export's mix, when the stretcher's
+/// arrays were let go). Bungee's Eigen has a namespace of its own, so
+/// nothing else's copy answers to its names.
+#[test]
+fn eigen_is_bungees_own() {
+    let library = std::fs::read(env!("CONCAT_STRETCH_BUNGEE_LIB")).expect("the Bungee library");
+    let has = |name: &[u8]| library.windows(name.len()).any(|window| window == name);
+    assert!(has(b"BungeeEigen"), "the library has no Eigen of Bungee's own");
+    // Mangled, a name in namespace Eigen ends `@Eigen@@` (MSVC) or runs
+    // `N5Eigen` (Itanium); one in BungeeEigen has no `5Eigen` or `@Eigen`.
+    assert!(
+        !has(b"@Eigen@@") && !has(b"5Eigen"),
+        "Bungee's code still defines names in Eigen's own namespace"
+    );
+}
